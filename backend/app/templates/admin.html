@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Flow · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14110e;
+  --bg-raise:#1c1814;
+  --bg-card:#211c17;
+  --line:#332c24;
+  --line-soft:#2a241d;
+  --gold:#E8540B;
+  --gold-bright:#FF7A3D;
+  --gold-dim:rgba(232,84,11,.14);
+  --ink:#f0eae0;
+  --ink-mid:#b5ab9a;
+  --ink-dim:#7d7466;
+  --green:#7da97a;
+  --red:#c07a6a;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--ink);font-family:'DM Sans',sans-serif;
+  font-size:15px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.display{font-family:'Urbanist',sans-serif}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+::selection{background:var(--gold);color:#14110e}
+.hidden{display:none!important}
+
+.eyebrow{
+  font-family:'Urbanist',sans-serif;font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;justify-content:center;
+  border:none;border-radius:10px;padding:11px 22px;font-size:13.5px;font-weight:600;
+  letter-spacing:.02em;transition:all .22s ease;
+}
+.btn-gold{background:var(--gold);color:#14110e}
+.btn-gold:hover{background:var(--gold-bright);transform:translateY(-1px)}
+.btn-gold:disabled{background:#4a4032;color:#877c69;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--ink-mid);border:1px solid var(--line);padding:10px 20px}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright)}
+.btn-sm{padding:7px 14px;font-size:12.5px}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;padding:4px 11px;border-radius:100px;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-0{background:rgba(125,140,170,.15);color:#9fb0d0}
+.b-1{background:rgba(232,84,11,.15);color:var(--gold-bright)}
+.b-2{background:rgba(180,140,90,.16);color:#d0a878}
+.b-3{background:rgba(125,169,122,.15);color:var(--green)}
+.b-4{background:rgba(232,84,11,.16);color:#FF9A66}
+.b-5{background:rgba(125,169,122,.22);color:#9fd29b}
+
+/* ---------- login ---------- */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.login-card{width:100%;max-width:380px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:40px}
+.wordmark{font-family:'Urbanist',sans-serif;font-weight:800;font-size:20px;letter-spacing:.02em;margin-bottom:28px}
+.wordmark span{color:var(--gold)}
+.login-card h2{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-card .sub{color:var(--ink-mid);font-size:13.5px;margin-bottom:28px}
+.field{margin-bottom:18px}
+.field label{
+  display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:600;margin-bottom:7px;font-family:'Urbanist',sans-serif;
+}
+.field input{
+  width:100%;background:var(--bg-raise);border:1px solid var(--line);border-radius:10px;
+  padding:12px 15px;color:var(--ink);font-size:14.5px;font-family:'DM Sans',sans-serif;
+}
+.field input:focus{outline:none;border-color:var(--gold)}
+.login-card .btn{width:100%;margin-top:6px}
+.login-err{color:var(--red);font-size:13px;margin-top:14px;display:none}
+
+/* ---------- app shell ---------- */
+#app{display:none}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 32px;border-bottom:1px solid var(--line-soft);
+}
+.tabs{display:flex;gap:6px}
+.tab{
+  padding:9px 18px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink-mid);
+  background:transparent;border:1px solid transparent;
+}
+.tab.active{background:var(--gold-dim);color:var(--gold-bright);border-color:rgba(232,84,11,.3)}
+main{padding:28px 32px;max-width:1280px;margin:0 auto}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.section-head h2{font-size:20px;font-weight:700}
+.count{color:var(--ink-dim);font-size:13px}
+
+table{width:100%;border-collapse:collapse;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th{
+  text-align:left;font-family:'Urbanist',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:600;padding:13px 18px;border-bottom:1px solid var(--line);
+}
+td{padding:14px 18px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer}
+tr.clickable:hover{background:var(--bg-raise)}
+.muted{color:var(--ink-mid)}
+select.stage-select{
+  background:var(--bg-raise);border:1px solid var(--line);color:var(--ink);
+  border-radius:8px;padding:6px 10px;font-size:13px;font-family:'DM Sans',sans-serif;
+}
+
+/* ---------- modal ---------- */
+.overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;
+  align-items:center;justify-content:center;padding:24px;
+}
+.overlay.show{display:flex}
+.modal{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+  width:100%;max-width:640px;max-height:88vh;overflow-y:auto;padding:32px;
+}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.modal-head h3{font-size:20px;font-weight:700}
+.close-x{background:transparent;border:none;color:var(--ink-dim);font-size:22px;line-height:1}
+.close-x:hover{color:var(--ink)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:10px 14px;font-size:14px;margin-bottom:22px}
+.kv dt{color:var(--ink-dim);font-size:12.5px;text-transform:uppercase;letter-spacing:.06em;font-family:'Urbanist',sans-serif}
+.file-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.file-row:last-child{border-bottom:none}
+.divider{border:none;border-top:1px solid var(--line-soft);margin:22px 0}
+.inv-line{display:flex;gap:10px;margin-bottom:8px}
+.inv-line input{flex:1;background:var(--bg-raise);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--ink);font-size:13.5px}
+.inv-line input.qty,.inv-line input.amount{flex:0 0 90px}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="wordmark">LEAD<span>FLOW</span> · Admin</div>
+    <h2>Sign in</h2>
+    <p class="sub">Elyon team access only</p>
+    <form id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" required></div>
+      <div class="field"><label>Password</label><input type="password" id="loginPassword" required></div>
+      <button type="submit" class="btn btn-gold">Sign in</button>
+      <p class="login-err" id="loginErr">Invalid credentials.</p>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="wordmark">LEAD<span>FLOW</span> · Admin</div>
+    <div class="tabs">
+      <button class="tab active" data-tab="jobs">Jobs</button>
+      <button class="tab" data-tab="studios">Studios</button>
+    </div>
+    <button class="btn btn-ghost btn-sm" id="logoutBtn">Sign out</button>
+  </div>
+
+  <main>
+    <section id="jobsTab">
+      <div class="section-head"><h2>All jobs</h2><span class="count" id="jobsCount"></span></div>
+      <table>
+        <thead><tr><th>Ref</th><th>Studio</th><th>Job</th><th>Stage</th><th>Turnaround</th><th>Created</th></tr></thead>
+        <tbody id="jobsBody"></tbody>
+      </table>
+    </section>
+
+    <section id="studiosTab" class="hidden">
+      <div class="section-head"><h2>Studios</h2><span class="count" id="studiosCount"></span></div>
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Location</th><th>Plan</th><th>Joined</th></tr></thead>
+        <tbody id="studiosBody"></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<div class="overlay" id="jobOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3 id="jobModalRef"></h3>
+        <p class="muted" id="jobModalStudio" style="margin-top:4px;font-size:13.5px"></p>
+      </div>
+      <button class="close-x" id="jobModalClose">&times;</button>
+    </div>
+
+    <dl class="kv">
+      <dt>Job</dt><dd id="jobModalName"></dd>
+      <dt>Spec</dt><dd id="jobModalSpec"></dd>
+      <dt>Turnaround</dt><dd id="jobModalTurnaround"></dd>
+      <dt>Notes</dt><dd id="jobModalNotes"></dd>
+      <dt>Stage</dt><dd>
+        <select class="stage-select" id="jobModalStageSelect">
+          <option value="0">Received</option>
+          <option value="1">In Editing</option>
+          <option value="2">Quality Check</option>
+          <option value="3">Delivered</option>
+          <option value="4">Invoice Sent</option>
+          <option value="5">Invoice Paid</option>
+        </select>
+      </dd>
+    </dl>
+
+    <h4 class="eyebrow" style="margin-bottom:10px">Files</h4>
+    <div id="jobModalFiles"></div>
+
+    <hr class="divider">
+
+    <div id="invoiceSection"></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let adminToken = localStorage.getItem('admin_token') || '';
+let currentJobId = null;
+let currentJob = null;
+
+const stageLabels = ['Received','In Editing','Quality Check','Delivered','Invoice Sent','Invoice Paid'];
+
+function authHeaders(extra) {
+  return Object.assign({ Authorization: 'Bearer ' + adminToken }, extra || {});
+}
+
+async function api(path, opts) {
+  opts = opts || {};
+  opts.headers = authHeaders(opts.headers);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { logout(); throw new Error('unauthorized'); }
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+  return res.status === 204 ? null : res.json();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadJobs();
+  loadStudios();
+}
+
+function logout() {
+  adminToken = '';
+  localStorage.removeItem('admin_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginErr');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch(API + '/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error('bad creds');
+    const data = await res.json();
+    adminToken = data.access_token;
+    localStorage.setItem('admin_token', adminToken);
+    showApp();
+  } catch {
+    errEl.style.display = 'block';
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', logout);
+
+document.querySelectorAll('.tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+    tab.classList.add('active');
+    const name = tab.dataset.tab;
+    document.getElementById('jobsTab').classList.toggle('hidden', name !== 'jobs');
+    document.getElementById('studiosTab').classList.toggle('hidden', name !== 'studios');
+  });
+});
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+async function loadJobs() {
+  const jobs = await api('/admin/jobs');
+  document.getElementById('jobsCount').textContent = jobs.length + ' total';
+  const body = document.getElementById('jobsBody');
+  body.innerHTML = jobs.map((j) => `
+    <tr class="clickable" data-job-id="${j.id}">
+      <td>${j.ref}</td>
+      <td>${j.studio.name}</td>
+      <td>${j.name}</td>
+      <td><span class="badge b-${j.stage}"><span class="badge-dot"></span>${stageLabels[j.stage]}</span></td>
+      <td class="muted">${j.turnaround}</td>
+      <td class="muted">${fmtDate(j.created_at)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="muted">No jobs yet.</td></tr>';
+  body.querySelectorAll('tr[data-job-id]').forEach((row) => {
+    row.addEventListener('click', () => openJobModal(row.dataset.jobId));
+  });
+}
+
+async function loadStudios() {
+  const studios = await api('/admin/studios');
+  document.getElementById('studiosCount').textContent = studios.length + ' total';
+  const body = document.getElementById('studiosBody');
+  body.innerHTML = studios.map((s) => `
+    <tr>
+      <td>${s.name}</td>
+      <td class="muted">${s.email}</td>
+      <td class="muted">${s.location || '—'}</td>
+      <td class="muted">${s.plan}</td>
+      <td class="muted">${fmtDate(s.created_at)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" class="muted">No studios yet.</td></tr>';
+}
+
+async function openJobModal(jobId) {
+  currentJobId = jobId;
+  const job = await api('/admin/jobs/' + jobId);
+  currentJob = job;
+  document.getElementById('jobModalRef').textContent = job.ref;
+  document.getElementById('jobModalStudio').textContent = job.studio.name + ' · ' + job.studio.email;
+  document.getElementById('jobModalName').textContent = job.name;
+  document.getElementById('jobModalSpec').textContent = job.spec;
+  document.getElementById('jobModalTurnaround').textContent = job.turnaround;
+  document.getElementById('jobModalNotes').textContent = job.notes || '—';
+  document.getElementById('jobModalStageSelect').value = job.stage;
+
+  const filesEl = document.getElementById('jobModalFiles');
+  filesEl.innerHTML = job.files.length
+    ? job.files.map((f) => `
+        <div class="file-row">
+          <span>${f.filename} ${f.uploaded ? '' : '<span class="muted">(pending upload)</span>'}</span>
+          ${f.uploaded ? `<button class="btn btn-ghost btn-sm" data-file-id="${f.id}">Download</button>` : ''}
+        </div>
+      `).join('')
+    : '<p class="muted">No files uploaded.</p>';
+  filesEl.querySelectorAll('button[data-file-id]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { download_url } = await api(`/admin/jobs/${jobId}/files/${btn.dataset.fileId}/download`);
+      window.open(download_url, '_blank');
+    });
+  });
+
+  renderInvoiceSection(job);
+  document.getElementById('jobOverlay').classList.add('show');
+}
+
+function renderInvoiceSection(job) {
+  const el = document.getElementById('invoiceSection');
+  if (job.invoice) {
+    const inv = job.invoice;
+    el.innerHTML = `
+      <h4 class="eyebrow" style="margin-bottom:10px">Invoice ${inv.invoice_number}</h4>
+      ${inv.lines.map((l) => `<div class="file-row"><span>${l.description} × ${l.qty}</span><span>$${l.amount}</span></div>`).join('')}
+      <div class="file-row" style="font-weight:700"><span>Total</span><span>$${inv.total_amount}</span></div>
+      <div style="margin-top:14px">
+        ${inv.paid
+          ? '<span class="badge b-5"><span class="badge-dot"></span>Paid</span>'
+          : '<button class="btn btn-gold btn-sm" id="markPaidBtn">Mark as paid</button>'}
+      </div>
+    `;
+    const payBtn = document.getElementById('markPaidBtn');
+    if (payBtn) payBtn.addEventListener('click', async () => {
+      await api(`/jobs/${currentJobId}/invoice/pay`, { method: 'POST' });
+      openJobModal(currentJobId);
+      loadJobs();
+    });
+  } else {
+    el.innerHTML = `
+      <h4 class="eyebrow" style="margin-bottom:10px">Create invoice</h4>
+      <div id="invLines">
+        <div class="inv-line"><input class="desc" placeholder="Description"><input class="qty" type="number" value="1" min="1"><input class="amount" type="number" placeholder="Amount" step="0.01"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="addLineBtn" style="margin-bottom:14px">+ Add line</button>
+      <br>
+      <button class="btn btn-gold btn-sm" id="createInvoiceBtn">Create invoice</button>
+    `;
+    document.getElementById('addLineBtn').addEventListener('click', () => {
+      const row = document.createElement('div');
+      row.className = 'inv-line';
+      row.innerHTML = '<input class="desc" placeholder="Description"><input class="qty" type="number" value="1" min="1"><input class="amount" type="number" placeholder="Amount" step="0.01">';
+      document.getElementById('invLines').appendChild(row);
+    });
+    document.getElementById('createInvoiceBtn').addEventListener('click', async () => {
+      const lines = Array.from(document.querySelectorAll('#invLines .inv-line')).map((row) => ({
+        description: row.querySelector('.desc').value,
+        qty: parseInt(row.querySelector('.qty').value, 10) || 1,
+        amount: parseFloat(row.querySelector('.amount').value) || 0,
+      })).filter((l) => l.description);
+      const total_amount = lines.reduce((sum, l) => sum + l.qty * l.amount, 0);
+      await api(`/jobs/${currentJobId}/invoice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lines, total_amount }),
+      });
+      openJobModal(currentJobId);
+      loadJobs();
+    });
+  }
+}
+
+document.getElementById('jobModalStageSelect').addEventListener('change', async (e) => {
+  await api(`/jobs/${currentJobId}/stage`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stage: parseInt(e.target.value, 10) }),
+  });
+  loadJobs();
+});
+
+document.getElementById('jobModalClose').addEventListener('click', () => {
+  document.getElementById('jobOverlay').classList.remove('show');
+});
+document.getElementById('jobOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'jobOverlay') document.getElementById('jobOverlay').classList.remove('show');
+});
+
+if (adminToken) {
+  api('/admin/me').then(showApp).catch(logout);
+} else {
+  logout();
+}
+</script>
+</body>
+</html>
