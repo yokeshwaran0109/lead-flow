@@ -6,8 +6,8 @@ from pydantic import BaseModel, ConfigDict
 
 class InvoiceLine(BaseModel):
     description: str
-    qty: str
-    amount: str
+    qty: int
+    amount: float
 
 
 class InvoiceCreate(BaseModel):
