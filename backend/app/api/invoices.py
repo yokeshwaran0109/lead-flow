@@ -1,0 +1,58 @@
+import uuid
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.deps import get_current_studio, require_admin
+from app.core.database import get_db
+from app.models.invoice import Invoice
+from app.models.job import Job, Stage
+from app.models.studio import Studio
+from app.schemas.invoice import InvoiceCreate, InvoiceOut
+
+router = APIRouter(prefix="/jobs/{job_id}/invoice", tags=["invoices"])
+
+
+@router.get("", response_model=InvoiceOut)
+async def get_invoice(
+    job_id: str,
+    studio: Studio = Depends(get_current_studio),
+    db: AsyncSession = Depends(get_db),
+):
+    job = await db.get(Job, job_id)
+    if not job or job.studio_id != studio.id or not job.invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return job.invoice
+
+
+@router.post("", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
+async def create_invoice(job_id: str, data: InvoiceCreate, db: AsyncSession = Depends(get_db)):
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    invoice_number = f"ELY-{datetime.now(timezone.utc).year}-{str(uuid.uuid4().int)[:4]}"
+    invoice = Invoice(
+        job_id=job.id,
+        invoice_number=invoice_number,
+        lines=[line.model_dump() for line in data.lines],
+        total_amount=data.total_amount,
+    )
+    job.stage = Stage.INVOICE_SENT.value
+    db.add(invoice)
+    await db.commit()
+    await db.refresh(invoice)
+    return invoice
+
+
+@router.post("/pay", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
+async def mark_paid(job_id: str, db: AsyncSession = Depends(get_db)):
+    job = await db.get(Job, job_id)
+    if not job or not job.invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    job.invoice.paid = True
+    job.invoice.paid_at = datetime.now(timezone.utc)
+    job.stage = Stage.INVOICE_PAID.value
+    await db.commit()
+    await db.refresh(job.invoice)
+    return job.invoice
