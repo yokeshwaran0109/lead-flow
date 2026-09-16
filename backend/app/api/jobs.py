@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +45,7 @@ async def list_jobs(
 
 @router.get("/{job_id}", response_model=JobOut)
 async def get_job(
-    job_id: str,
+    job_id: uuid.UUID,
     studio: Studio = Depends(get_current_studio),
     db: AsyncSession = Depends(get_db),
 ):
@@ -54,11 +56,11 @@ async def get_job(
 
 
 @router.patch("/{job_id}/stage", response_model=JobOut, dependencies=[Depends(require_admin)])
-async def update_stage(job_id: str, data: StageUpdate, db: AsyncSession = Depends(get_db)):
+async def update_stage(job_id: uuid.UUID, data: StageUpdate, db: AsyncSession = Depends(get_db)):
     job = await db.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    job.stage = data.stage
+    job.stage = data.stage.value
     await db.commit()
     await db.refresh(job)
     return job

@@ -3,6 +3,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.models.job import Stage
+
 
 class JobCreate(BaseModel):
     name: str
@@ -26,4 +28,4 @@ class JobOut(BaseModel):
 
 
 class StageUpdate(BaseModel):
-    stage: int
+    stage: Stage

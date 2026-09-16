@@ -1,9 +1,12 @@
+from functools import lru_cache
+
 import boto3
 from botocore.config import Config
 
 from app.core.config import settings
 
 
+@lru_cache
 def _client():
     return boto3.client(
         "s3",

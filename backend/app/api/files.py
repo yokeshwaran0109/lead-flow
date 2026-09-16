@@ -15,7 +15,7 @@ from app.services.r2_storage import generate_presigned_put_url
 router = APIRouter(prefix="/jobs/{job_id}/files", tags=["files"])
 
 
-async def _get_owned_job(job_id: str, studio: Studio, db: AsyncSession) -> Job:
+async def _get_owned_job(job_id: uuid.UUID, studio: Studio, db: AsyncSession) -> Job:
     job = await db.get(Job, job_id)
     if not job or job.studio_id != studio.id:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -24,7 +24,7 @@ async def _get_owned_job(job_id: str, studio: Studio, db: AsyncSession) -> Job:
 
 @router.post("/presign", response_model=list[FilePresignResponse])
 async def presign_files(
-    job_id: str,
+    job_id: uuid.UUID,
     data: FilePresignRequestBatch,
     studio: Studio = Depends(get_current_studio),
     db: AsyncSession = Depends(get_db),
@@ -53,8 +53,8 @@ async def presign_files(
 
 @router.post("/{file_id}/complete", response_model=FileOut)
 async def complete_upload(
-    job_id: str,
-    file_id: str,
+    job_id: uuid.UUID,
+    file_id: uuid.UUID,
     studio: Studio = Depends(get_current_studio),
     db: AsyncSession = Depends(get_db),
 ):
@@ -70,7 +70,7 @@ async def complete_upload(
 
 @router.get("", response_model=list[FileOut])
 async def list_files(
-    job_id: str,
+    job_id: uuid.UUID,
     studio: Studio = Depends(get_current_studio),
     db: AsyncSession = Depends(get_db),
 ):

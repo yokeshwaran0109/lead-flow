@@ -2,7 +2,9 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_studio, require_admin
 from app.core.database import get_db
@@ -16,22 +18,24 @@ router = APIRouter(prefix="/jobs/{job_id}/invoice", tags=["invoices"])
 
 @router.get("", response_model=InvoiceOut)
 async def get_invoice(
-    job_id: str,
+    job_id: uuid.UUID,
     studio: Studio = Depends(get_current_studio),
     db: AsyncSession = Depends(get_db),
 ):
-    job = await db.get(Job, job_id)
+    job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job or job.studio_id != studio.id or not job.invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     return job.invoice
 
 
 @router.post("", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
-async def create_invoice(job_id: str, data: InvoiceCreate, db: AsyncSession = Depends(get_db)):
-    job = await db.get(Job, job_id)
+async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSession = Depends(get_db)):
+    job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    invoice_number = f"ELY-{datetime.now(timezone.utc).year}-{str(uuid.uuid4().int)[:4]}"
+    if job.invoice:
+        raise HTTPException(status_code=400, detail="Invoice already exists for this job")
+    invoice_number = f"ELY-{datetime.now(timezone.utc).year}-{job.seq}"
     invoice = Invoice(
         job_id=job.id,
         invoice_number=invoice_number,
@@ -40,14 +44,18 @@ async def create_invoice(job_id: str, data: InvoiceCreate, db: AsyncSession = De
     )
     job.stage = Stage.INVOICE_SENT.value
     db.add(invoice)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=400, detail="Invoice already exists for this job")
     await db.refresh(invoice)
     return invoice
 
 
 @router.post("/pay", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
-async def mark_paid(job_id: str, db: AsyncSession = Depends(get_db)):
-    job = await db.get(Job, job_id)
+async def mark_paid(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job or not job.invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
     job.invoice.paid = True

@@ -1,3 +1,5 @@
+import secrets
+
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,5 +26,5 @@ async def get_current_studio(
 
 
 async def require_admin(x_admin_key: str | None = Header(None)) -> None:
-    if x_admin_key != settings.admin_api_key:
+    if not x_admin_key or not secrets.compare_digest(x_admin_key, settings.admin_api_key):
         raise HTTPException(status_code=403, detail="Admin access required")
