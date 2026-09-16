@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Flow · Studio Editing Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14110e;
+  --bg-raise:#1c1814;
+  --bg-card:#211c17;
+  --line:#332c24;
+  --line-soft:#2a241d;
+  --gold:#E8540B;
+  --gold-bright:#FF7A3D;
+  --gold-dim:rgba(232,84,11,.14);
+  --ink:#f0eae0;
+  --ink-mid:#b5ab9a;
+  --ink-dim:#7d7466;
+  --green:#7da97a;
+  --red:#c07a6a;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'DM Sans',sans-serif;
+  font-size:15px;
+  line-height:1.6;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.display{font-family:'Urbanist',sans-serif}
+button{font-family:'DM Sans',sans-serif;cursor:pointer}
+::selection{background:var(--gold);color:#14110e}
+
+/* ---------- shared ---------- */
+.eyebrow{
+  font-family:'Urbanist',sans-serif;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);font-weight:600;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;justify-content:center;
+  border:none;border-radius:10px;
+  padding:13px 26px;font-size:14px;font-weight:600;letter-spacing:.02em;
+  transition:all .22s ease;
+}
+.btn-gold{background:var(--gold);color:#14110e}
+.btn-gold:hover{background:var(--gold-bright);transform:translateY(-1px)}
+.btn-gold:disabled{background:#4a4032;color:#877c69;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--ink-mid);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold-bright)}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 12px;border-radius:100px;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.b-editing{background:rgba(232,84,11,.15);color:var(--gold-bright)}
+.b-received{background:rgba(125,140,170,.15);color:#9fb0d0}
+.b-qc{background:rgba(180,140,90,.16);color:#d0a878}
+.b-delivered{background:rgba(125,169,122,.15);color:var(--green)}
+.b-invsent{background:rgba(232,84,11,.16);color:#FF9A66}
+.b-invpaid{background:rgba(125,169,122,.22);color:#9fd29b}
+.hidden{display:none!important}
+
+/* ---------- login ---------- */
+#loginScreen{
+  min-height:100vh;display:flex;align-items:stretch;
+}
+.login-left{
+  flex:1.1;position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse at 20% 25%, rgba(232,84,11,.20), transparent 55%),
+    radial-gradient(ellipse at 85% 80%, rgba(232,84,11,.10), transparent 50%),
+    linear-gradient(160deg,#1b1712 0%, #14110e 70%);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:56px 64px;
+  border-right:1px solid var(--line-soft);
+}
+.login-left .wordmark{font-family:'Urbanist',sans-serif;font-weight:800;font-size:22px;letter-spacing:.02em}
+.login-left .wordmark span{color:var(--gold)}
+.login-hero h1{
+  font-size:clamp(34px,4vw,52px);font-weight:300;line-height:1.12;letter-spacing:-.015em;
+  max-width:520px;
+}
+.login-hero h1 em{font-style:normal;font-weight:700;color:var(--gold-bright)}
+.login-hero p{margin-top:22px;color:var(--ink-mid);max-width:440px;font-size:15.5px}
+.login-flow{
+  display:flex;align-items:center;gap:14px;color:var(--ink-dim);
+  font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;font-family:'Urbanist',sans-serif;font-weight:600;
+}
+.login-flow .node{display:flex;align-items:center;gap:9px}
+.login-flow .dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.login-flow .rail{width:54px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+.login-right{
+  flex:.9;display:flex;align-items:center;justify-content:center;padding:48px;
+}
+.login-card{width:100%;max-width:400px}
+.login-card h2{font-size:26px;font-weight:700;margin:14px 0 6px}
+.login-card .sub{color:var(--ink-mid);font-size:14px;margin-bottom:34px}
+.field{margin-bottom:20px}
+.field label{
+  display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:600;margin-bottom:8px;font-family:'Urbanist',sans-serif;
+}
+.field input{
+  width:100%;background:var(--bg-raise);border:1px solid var(--line);
+  border-radius:10px;padding:13px 16px;color:var(--ink);font-size:15px;
+  font-family:'DM Sans',sans-serif;transition:border-color .2s;
+}
+.field input:focus{outline:none;border-color:var(--gold)}
+.login-card .btn{width:100%;margin-top:8px}
+.login-foot{margin-top:28px;text-align:center;font-size:12.5px;color:var(--ink-dim)}
+.login-foot b{color:var(--ink-mid)}
+
+/* ---------- app shell ---------- */
+#appScreen{min-height:100vh;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:70px;
+  background:rgba(20,17,14,.92);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);
+  position:sticky;top:0;z-index:50;
+}
+.topbar .wordmark{font-family:'Urbanist',sans-serif;font-weight:800;font-size:18px}
+.topbar .wordmark span{color:var(--gold)}
+.topbar .wordmark small{
+  display:block;font-size:10px;font-weight:600;letter-spacing:.2em;
+  color:var(--ink-dim);text-transform:uppercase;margin-top:-2px;
+}
+.tabs{display:flex;gap:6px}
+.tab{
+  background:none;border:none;color:var(--ink-mid);
+  font-size:14px;font-weight:600;padding:10px 20px;border-radius:9px;
+  font-family:'Urbanist',sans-serif;letter-spacing:.03em;
+  transition:all .2s;position:relative;
+}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--gold-bright);background:var(--gold-dim)}
+.tab .count{
+  display:inline-block;margin-left:7px;background:var(--gold);color:#14110e;
+  font-size:11px;font-weight:700;padding:1px 7px;border-radius:100px;vertical-align:1px;
+}
+.studio-chip{display:flex;align-items:center;gap:12px}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),#8a3407);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Urbanist',sans-serif;font-weight:700;font-size:13px;color:#14110e;
+}
+.studio-chip .meta{line-height:1.25;text-align:right}
+.studio-chip .name{font-size:13.5px;font-weight:600}
+.studio-chip .plan{font-size:11px;color:var(--ink-dim);letter-spacing:.08em;text-transform:uppercase}
+.logout{background:none;border:none;color:var(--ink-dim);font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.logout:hover{color:var(--gold-bright)}
+
+.main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
+.page-head{margin-bottom:34px}
+.page-head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:8px}
+.page-head p{color:var(--ink-mid);margin-top:6px;max-width:620px}
+
+/* ---------- upload ---------- */
+.upload-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:26px;align-items:start}
+.card{
+  background:var(--bg-card);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:28px;
+}
+.card h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.card .card-sub{font-size:13px;color:var(--ink-dim);margin-bottom:20px}
+.dropzone{
+  border:1.5px dashed var(--line);border-radius:12px;
+  padding:52px 24px;text-align:center;transition:all .25s;cursor:pointer;
+  background:var(--bg-raise);
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--gold);background:rgba(232,84,11,.06)}
+.dz-icon{
+  width:52px;height:52px;margin:0 auto 16px;border-radius:50%;
+  background:var(--gold-dim);display:flex;align-items:center;justify-content:center;
+}
+.dz-icon svg{width:24px;height:24px;stroke:var(--gold-bright)}
+.dropzone .dz-title{font-family:'Urbanist',sans-serif;font-weight:700;font-size:16px}
+.dropzone .dz-hint{font-size:13px;color:var(--ink-dim);margin-top:6px}
+.dropzone .dz-hint b{color:var(--gold-bright);font-weight:600}
+.filelist{margin-top:20px;display:flex;flex-direction:column;gap:10px;max-height:280px;overflow-y:auto}
+.file-row{
+  display:flex;align-items:center;gap:14px;
+  background:var(--bg-raise);border:1px solid var(--line-soft);
+  border-radius:10px;padding:10px 14px;animation:rise .3s ease both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.thumb{
+  width:44px;height:44px;border-radius:8px;flex-shrink:0;object-fit:cover;
+  background:linear-gradient(135deg,#2c261e,#3a3128);
+  display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-dim);
+  overflow:hidden;
+}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.file-row .fmeta{flex:1;min-width:0}
+.file-row .fname{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-row .fsize{font-size:12px;color:var(--ink-dim)}
+.file-row .fx{
+  background:none;border:none;color:var(--ink-dim);font-size:17px;line-height:1;
+  padding:6px;border-radius:6px;
+}
+.file-row .fx:hover{color:var(--red)}
+.upload-summary{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:18px;padding-top:18px;border-top:1px solid var(--line-soft);
+  font-size:13px;color:var(--ink-mid);
+}
+.upload-summary b{color:var(--ink)}
+select,textarea{
+  width:100%;background:var(--bg-raise);border:1px solid var(--line);
+  border-radius:10px;padding:12px 14px;color:var(--ink);font-size:14px;
+  font-family:'DM Sans',sans-serif;
+}
+select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{resize:vertical;min-height:88px}
+.side-field{margin-bottom:18px}
+.side-field label{
+  display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-dim);font-weight:600;margin-bottom:8px;font-family:'Urbanist',sans-serif;
+}
+.turnaround{
+  display:flex;gap:8px;
+}
+.turnaround button{
+  flex:1;background:var(--bg-raise);border:1px solid var(--line);border-radius:9px;
+  padding:11px 6px;color:var(--ink-mid);font-size:12.5px;font-weight:600;transition:all .2s;
+  line-height:1.3;
+}
+.turnaround button small{display:block;font-weight:400;font-size:11px;color:var(--ink-dim)}
+.turnaround button.sel{border-color:var(--gold);color:var(--gold-bright);background:var(--gold-dim)}
+.turnaround button.sel small{color:var(--gold)}
+.send-note{
+  font-size:12px;color:var(--ink-dim);margin-top:14px;line-height:1.55;
+  padding:12px 14px;background:var(--bg-raise);border-radius:9px;border:1px solid var(--line-soft);
+}
+.send-note b{color:var(--gold-bright)}
+
+/* ---------- jobs ---------- */
+.section-label{
+  display:flex;align-items:center;gap:14px;margin:38px 0 18px;
+}
+.section-label:first-of-type{margin-top:0}
+.section-label h2{font-size:15px;font-weight:700;letter-spacing:.04em;white-space:nowrap}
+.section-label .rule{flex:1;height:1px;background:var(--line-soft)}
+.job-card{
+  background:var(--bg-card);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:24px 28px;margin-bottom:16px;
+  transition:border-color .2s;
+}
+.job-card:hover{border-color:var(--line)}
+.job-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.job-top h3{font-size:17px;font-weight:700}
+.job-ref{font-size:12.5px;color:var(--ink-dim);margin-top:3px}
+.job-ref b{color:var(--ink-mid);font-weight:500}
+.stage-rail{display:flex;align-items:center;margin-top:24px}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;position:relative}
+.stage .node{
+  width:14px;height:14px;border-radius:50%;
+  background:var(--bg-raise);border:2px solid var(--line);z-index:2;transition:all .3s;
+}
+.stage.done .node{background:var(--gold);border-color:var(--gold)}
+.stage.now .node{
+  background:var(--bg);border-color:var(--gold-bright);
+  box-shadow:0 0 0 5px rgba(232,84,11,.18);
+}
+.stage .conn{
+  position:absolute;top:6px;left:calc(-50% + 7px);right:calc(50% + 7px);height:2px;
+  background:var(--line);z-index:1;
+}
+.stage.done .conn,.stage.now .conn{background:var(--gold)}
+.stage:first-child .conn{display:none}
+.stage .slabel{
+  margin-top:11px;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  font-family:'Urbanist',sans-serif;font-weight:600;color:var(--ink-dim);text-align:center;
+}
+.stage.done .slabel{color:var(--ink-mid)}
+.stage.now .slabel{color:var(--gold-bright)}
+.job-foot{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft);
+  font-size:12.5px;color:var(--ink-dim);
+}
+.job-foot b{color:var(--ink-mid);font-weight:500}
+
+table.jobs-table{width:100%;border-collapse:collapse}
+.jobs-table th{
+  text-align:left;font-family:'Urbanist',sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);
+  padding:12px 16px;border-bottom:1px solid var(--line);
+}
+.jobs-table td{
+  padding:16px;border-bottom:1px solid var(--line-soft);font-size:14px;vertical-align:middle;
+}
+.jobs-table tr:last-child td{border-bottom:none}
+.jobs-table tbody tr{transition:background .15s}
+.jobs-table tbody tr:hover{background:rgba(232,84,11,.04)}
+.jobs-table .jt-name{font-weight:600}
+.jobs-table .jt-sub{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.inv-btn{
+  background:none;border:1px solid var(--line);border-radius:8px;
+  padding:8px 16px;color:var(--gold-bright);font-size:12.5px;font-weight:600;
+  display:inline-flex;align-items:center;gap:7px;transition:all .2s;
+}
+.inv-btn:hover{border-color:var(--gold);background:var(--gold-dim)}
+.inv-btn svg{width:14px;height:14px;stroke:currentColor}
+
+/* ---------- modals & toast ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(10,8,6,.72);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;
+  animation:fade .2s ease;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:18px;
+  width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+  animation:pop .28s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pop{from{opacity:0;transform:scale(.94) translateY(10px)}to{opacity:1;transform:none}}
+.modal-pad{padding:34px 38px}
+.invoice-head{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding-bottom:24px;border-bottom:1px solid var(--line);margin-bottom:24px;
+}
+.invoice-head .wordmark{font-family:'Urbanist',sans-serif;font-weight:800;font-size:19px}
+.invoice-head .wordmark span{color:var(--gold)}
+.invoice-head .inv-no{text-align:right}
+.invoice-head .inv-no .lbl{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);font-family:'Urbanist',sans-serif;font-weight:600}
+.invoice-head .inv-no .val{font-size:16px;font-weight:700;margin-top:2px}
+.inv-meta{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:26px;font-size:13px}
+.inv-meta .lbl{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);font-family:'Urbanist',sans-serif;font-weight:600;margin-bottom:4px}
+.inv-lines{width:100%;border-collapse:collapse;margin-bottom:8px}
+.inv-lines th{
+  text-align:left;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-dim);padding:10px 0;border-bottom:1px solid var(--line);
+  font-family:'Urbanist',sans-serif;font-weight:700;
+}
+.inv-lines th:last-child,.inv-lines td:last-child{text-align:right}
+.inv-lines td{padding:12px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.inv-lines td small{display:block;color:var(--ink-dim);font-size:12px}
+.inv-totals{margin-top:16px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.inv-totals .row{display:flex;gap:40px;font-size:13.5px;color:var(--ink-mid)}
+.inv-totals .row span:last-child{min-width:90px;text-align:right}
+.inv-totals .grand{
+  font-size:18px;font-weight:700;color:var(--ink);
+  padding-top:10px;border-top:1px solid var(--line);margin-top:4px;
+}
+.inv-totals .grand span:last-child{color:var(--gold-bright)}
+.inv-paid{
+  display:inline-flex;align-items:center;gap:7px;margin-top:20px;
+  border:1.5px solid var(--green);color:var(--green);border-radius:8px;
+  padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  font-family:'Urbanist',sans-serif;transform:rotate(-2deg);
+}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:0 38px 30px}
+
+/* confirm modal */
+.confirm-icon{
+  width:64px;height:64px;border-radius:50%;background:var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 22px;
+}
+.confirm-icon svg{width:30px;height:30px;stroke:var(--gold-bright)}
+.modal.confirm{max-width:440px;text-align:center}
+.modal.confirm h3{font-size:21px;font-weight:700;margin-bottom:10px}
+.modal.confirm p{color:var(--ink-mid);font-size:14px;line-height:1.65}
+.modal.confirm p b{color:var(--ink)}
+.modal.confirm .btn{margin-top:26px;width:100%}
+
+.toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--bg-card);border:1px solid var(--gold);border-radius:12px;
+  padding:14px 24px;font-size:14px;display:flex;align-items:center;gap:10px;
+  z-index:200;opacity:0;transition:all .35s cubic-bezier(.2,.9,.3,1.2);
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .tdot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+
+.footer-note{
+  text-align:center;padding:26px;font-size:11.5px;color:var(--ink-dim);
+  border-top:1px solid var(--line-soft);letter-spacing:.04em;
+}
+.footer-note b{color:var(--ink-mid)}
+
+@media(max-width:900px){
+  .login-left{display:none}
+  .upload-grid{grid-template-columns:1fr}
+  .main{padding:30px 20px 70px}
+  .topbar{padding:0 20px}
+  .studio-chip .meta{display:none}
+  .jobs-table th:nth-child(3),.jobs-table td:nth-child(3){display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-left">
+    <div class="wordmark">LEAD<span>FLOW</span></div>
+    <div class="login-hero">
+      <div class="eyebrow">Studio Editing Portal</div>
+      <h1 style="margin-top:16px">Shoot to <em>finished art</em>, without touching a slider.</h1>
+      <p>Upload your session files, brief your edit, and track every job from studio to delivery. Editing handled end-to-end by Elyon.</p>
+    </div>
+    <div class="login-flow">
+      <div class="node"><div class="dot"></div>Studio uploads</div>
+      <div class="rail"></div>
+      <div class="node"><div class="dot"></div>Elyon edits</div>
+      <div class="rail"></div>
+      <div class="node"><div class="dot"></div>Delivery</div>
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-card">
+      <div class="eyebrow">Studio sign in</div>
+      <h2>Welcome back</h2>
+      <div class="sub">Sign in with your Lead Flow studio credentials.</div>
+      <div class="field">
+        <label>Studio email</label>
+        <input type="email" id="loginEmail" value="studio@lightandlacestudios.co.uk">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPass" value="demopassword">
+      </div>
+      <button class="btn btn-gold" onclick="doLogin()">Sign in to portal</button>
+      <div class="login-foot">Powered by <b>Lead Flow</b> · Editing by <b>Elyon</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="appScreen" class="hidden">
+  <div class="topbar">
+    <div class="wordmark">LEAD<span>FLOW</span><small>Editing Portal</small></div>
+    <div class="tabs">
+      <button class="tab active" id="tabUpload" onclick="switchTab('upload')">New Job</button>
+      <button class="tab" id="tabJobs" onclick="switchTab('jobs')">Jobs <span class="count">3</span></button>
+    </div>
+    <div class="studio-chip">
+      <div class="meta">
+        <div class="name">Light &amp; Lace Studios</div>
+        <div class="plan">Barnsley · Pro Plan</div>
+      </div>
+      <div class="avatar">LL</div>
+      <button class="logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- ======== UPLOAD VIEW ======== -->
+    <div id="viewUpload">
+      <div class="page-head">
+        <div class="eyebrow">New editing job</div>
+        <h1>Send a shoot to Elyon</h1>
+        <p>Upload your RAW or high-res files, choose your edit specification, and submit. You'll get a confirmation and live status in the Jobs tab.</p>
+      </div>
+
+      <div class="upload-grid">
+        <div class="card">
+          <h3>Session files</h3>
+          <div class="card-sub">RAW, TIFF or full-resolution JPEG · Drag and drop or browse</div>
+          <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+            <div class="dz-icon">
+              <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+            </div>
+            <div class="dz-title">Drop shoot files here</div>
+            <div class="dz-hint">or <b>browse your computer</b> · up to 2,000 files per job</div>
+          </div>
+          <input type="file" id="fileInput" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
+          <div class="filelist" id="fileList"></div>
+          <div class="upload-summary" id="uploadSummary" style="display:none">
+            <span><b id="fileCount">0</b> files selected</span>
+            <span><b id="fileSize">0 MB</b> total</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Job details</h3>
+          <div class="card-sub">Tell Elyon how you want this shoot handled</div>
+          <div class="side-field">
+            <label>Job name</label>
+            <input type="text" id="jobName" placeholder="e.g. Boudoir — Mrs H, 21 Aug" style="width:100%;background:var(--bg-raise);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--ink);font-size:14px;font-family:'DM Sans',sans-serif">
+          </div>
+          <div class="side-field">
+            <label>Edit specification</label>
+            <select id="editSpec">
+              <option>Signature Boudoir — full retouch</option>
+              <option>Colour &amp; tone only</option>
+              <option>Cull + colour + light retouch</option>
+              <option>Fine art black &amp; white conversion</option>
+              <option>Album-ready master edit</option>
+            </select>
+          </div>
+          <div class="side-field">
+            <label>Turnaround</label>
+            <div class="turnaround">
+              <button class="sel" onclick="selTurn(this)">Standard<small>72 hours</small></button>
+              <button onclick="selTurn(this)">Priority<small>48 hours</small></button>
+              <button onclick="selTurn(this)">Rush<small>24 hours</small></button>
+            </div>
+          </div>
+          <div class="side-field">
+            <label>Notes for the editor</label>
+            <textarea id="jobNotes" placeholder="Skin tone reference, style notes, images to prioritise for the reveal…"></textarea>
+          </div>
+          <button class="btn btn-gold" id="sendBtn" style="width:100%" disabled onclick="sendJob()">Send to Elyon</button>
+          <div class="send-note">Files transfer securely via the <b>Lead Flow × Elyon gateway</b>. You'll receive an in-portal and email confirmation once Elyon accepts the job.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== JOBS VIEW ======== -->
+    <div id="viewJobs" class="hidden">
+      <div class="page-head">
+        <div class="eyebrow">Job tracking</div>
+        <h1>Your editing jobs</h1>
+        <p>Live progress on current jobs with Elyon, plus your completed job history and invoices.</p>
+      </div>
+
+      <div class="section-label"><h2>Current jobs</h2><div class="rule"></div></div>
+      <div id="currentJobs"></div>
+
+      <div class="section-label"><h2>Completed jobs</h2><div class="rule"></div></div>
+      <div class="card" style="padding:8px 4px">
+        <table class="jobs-table">
+          <thead>
+            <tr><th>Job</th><th>Delivered</th><th>Files</th><th>Spec</th><th>Invoice</th></tr>
+          </thead>
+          <tbody id="completedJobs"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-note">Visual demo only — no data is transmitted. <b>Lead Flow</b> Studio Editing Portal · Editing services by <b>Elyon</b></div>
+</div>
+
+<!-- ============ INVOICE MODAL ============ -->
+<div class="overlay hidden" id="invoiceOverlay" onclick="if(event.target===this)closeInvoice()">
+  <div class="modal">
+    <div class="modal-pad">
+      <div class="invoice-head">
+        <div>
+          <div class="wordmark">ELYON</div>
+          <div style="font-size:11.5px;color:var(--ink-dim);margin-top:4px;line-height:1.5">Editing Services<br>via Lead Flow Gateway</div>
+        </div>
+        <div class="inv-no">
+          <div class="lbl">Invoice</div>
+          <div class="val" id="invNumber">ELY-2026-0000</div>
+        </div>
+      </div>
+      <div class="inv-meta">
+        <div>
+          <div class="lbl">Billed to</div>
+          <div>Light &amp; Lace Studios<br><span style="color:var(--ink-dim)">Barnsley, South Yorkshire, UK</span></div>
+        </div>
+        <div>
+          <div class="lbl">Details</div>
+          <div>Issued: <span id="invDate">—</span><br>Job ref: <span id="invRef" style="color:var(--ink-dim)">—</span></div>
+        </div>
+      </div>
+      <table class="inv-lines">
+        <thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
+        <tbody id="invLines"></tbody>
+      </table>
+      <div class="inv-totals">
+        <div class="row"><span>Subtotal</span><span id="invSub">£0.00</span></div>
+        <div class="row"><span>VAT (0% — reverse charge)</span><span>£0.00</span></div>
+        <div class="row grand"><span>Total</span><span id="invTotal">£0.00</span></div>
+      </div>
+      <div class="inv-paid">✓ Paid</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="showToast('Demo only — PDF download not wired up')">Download PDF</button>
+      <button class="btn btn-gold" onclick="closeInvoice()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SENT CONFIRMATION ============ -->
+<div class="overlay hidden" id="sentOverlay" onclick="if(event.target===this)closeSent()">
+  <div class="modal confirm">
+    <div class="modal-pad">
+      <div class="confirm-icon">
+        <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.27 3.13a59.77 59.77 0 0118.5 8.87 59.77 59.77 0 01-18.5 8.87L6 12zm0 0h7.5"/></svg>
+      </div>
+      <h3>Job sent to Elyon</h3>
+      <p id="sentSummary">Your files are on their way. Track progress any time in the <b>Jobs</b> tab.</p>
+      <button class="btn btn-gold" onclick="closeSent();switchTab('jobs')">View in Jobs</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
+
+<script>
+/* ================= CONFIG / STATE ================= */
+const API_BASE = 'http://192.168.10.32:8000';
+let token = null;
+let files = [];
+
+const STAGES = ['Received','In editing','Quality check','Delivered','Invoice sent','Invoice paid'];
+
+let currentJobs = [];
+let completedJobs = [];
+
+/* ================= API HELPER ================= */
+async function api(path, opts={}){
+  const headers = Object.assign({}, opts.headers||{});
+  if(opts.body) headers['Content-Type'] = 'application/json';
+  if(token) headers['Authorization'] = 'Bearer '+token;
+  const res = await fetch(API_BASE+path, Object.assign({}, opts, {headers}));
+  if(!res.ok){
+    let detail = 'Request failed';
+    try{ const j = await res.json(); detail = typeof j.detail==='string' ? j.detail : JSON.stringify(j.detail); }catch(e){}
+    throw new Error(detail);
+  }
+  if(res.status===204) return null;
+  return res.json();
+}
+
+/* ================= AUTH ================= */
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPass').value;
+  try{
+    const auth = await api('/auth/login', {method:'POST', body:JSON.stringify({email,password})});
+    token = auth.access_token;
+    const studio = await api('/auth/me');
+    document.querySelector('.studio-chip .name').textContent = studio.name;
+    document.querySelector('.studio-chip .plan').textContent = (studio.location ? studio.location+' · ' : '') + studio.plan;
+    document.querySelector('.avatar').textContent = studio.name.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    await renderJobs();
+    showToast('Signed in as '+studio.name);
+  }catch(err){
+    showToast(err.message || 'Sign in failed');
+  }
+}
+function doLogout(){
+  token = null;
+  document.getElementById('appScreen').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+/* ================= TABS ================= */
+function switchTab(t){
+  document.getElementById('tabUpload').classList.toggle('active', t==='upload');
+  document.getElementById('tabJobs').classList.toggle('active', t==='jobs');
+  document.getElementById('viewUpload').classList.toggle('hidden', t!=='upload');
+  document.getElementById('viewJobs').classList.toggle('hidden', t!=='jobs');
+  if(t==='jobs') renderJobs();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ================= UPLOAD ================= */
+const dz = document.getElementById('dropzone');
+['dragenter','dragover'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.add('drag')}));
+['dragleave','drop'].forEach(e=>dz.addEventListener(e,ev=>{ev.preventDefault();dz.classList.remove('drag')}));
+dz.addEventListener('drop',ev=>handleFiles(ev.dataTransfer.files));
+
+function handleFiles(list){
+  for(const f of list){ files.push(f); }
+  renderFiles();
+}
+function removeFile(i){ files.splice(i,1); renderFiles(); }
+
+function renderFiles(){
+  const wrap = document.getElementById('fileList');
+  wrap.innerHTML = '';
+  let total = 0;
+  files.forEach((f,i)=>{
+    total += f.size;
+    const row = document.createElement('div');
+    row.className='file-row';
+    const isImg = f.type && f.type.startsWith('image/');
+    row.innerHTML = `
+      <div class="thumb" id="th${i}">${isImg?'':'RAW'}</div>
+      <div class="fmeta">
+        <div class="fname">${f.name}</div>
+        <div class="fsize">${(f.size/1048576).toFixed(1)} MB</div>
+      </div>
+      <button class="fx" onclick="removeFile(${i})">×</button>`;
+    wrap.appendChild(row);
+    if(isImg){
+      const r = new FileReader();
+      r.onload = e=>{ const t=document.getElementById('th'+i); if(t) t.innerHTML=`<img src="${e.target.result}">`; };
+      r.readAsDataURL(f);
+    }
+  });
+  const has = files.length>0;
+  document.getElementById('uploadSummary').style.display = has?'flex':'none';
+  document.getElementById('fileCount').textContent = files.length;
+  document.getElementById('fileSize').textContent = (total/1048576).toFixed(1)+' MB';
+  document.getElementById('sendBtn').disabled = !has;
+}
+
+function selTurn(btn){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+async function sendJob(){
+  const name = document.getElementById('jobName').value.trim() || 'Untitled shoot';
+  const spec = document.getElementById('editSpec').value;
+  const notes = document.getElementById('jobNotes').value;
+  const selBtn = document.querySelector('.turnaround .sel');
+  const turnLabel = selBtn.childNodes[0].textContent.trim();
+  const turnSmall = selBtn.querySelector('small').textContent.trim().replace(/\s*hours?/i,'h');
+  const turnaround = turnLabel + ' · ' + turnSmall;
+  const submittedFiles = files;
+  const sendBtn = document.getElementById('sendBtn');
+  sendBtn.disabled = true;
+  try{
+    const job = await api('/jobs', {method:'POST', body:JSON.stringify({name, spec, turnaround, notes})});
+    if(submittedFiles.length){
+      const presigned = await api(`/jobs/${job.id}/files/presign`, {method:'POST', body:JSON.stringify({
+        files: submittedFiles.map(f=>({filename:f.name, content_type:f.type||'application/octet-stream', size_bytes:f.size}))
+      })});
+      await Promise.all(presigned.map(async (p,i)=>{
+        const f = submittedFiles[i];
+        await fetch(p.upload_url, {method:'PUT', headers:{'Content-Type': f.type||'application/octet-stream'}, body:f});
+        await api(`/jobs/${job.id}/files/${p.file_id}/complete`, {method:'POST'});
+      }));
+    }
+    document.getElementById('sentSummary').innerHTML =
+      `<b>${submittedFiles.length} file${submittedFiles.length===1?'':'s'}</b> submitted as <b>${name}</b> (${spec}). Elyon will confirm acceptance shortly — track progress in the <b>Jobs</b> tab.`;
+    document.getElementById('sentOverlay').classList.remove('hidden');
+    files = []; renderFiles();
+    document.getElementById('jobName').value='';
+    document.getElementById('jobNotes').value='';
+    await renderJobs();
+  }catch(err){
+    showToast(err.message || 'Could not send job');
+  }finally{
+    sendBtn.disabled = files.length===0;
+  }
+}
+function closeSent(){ document.getElementById('sentOverlay').classList.add('hidden'); }
+
+/* ================= JOBS ================= */
+async function fileCountFor(jobId){
+  try{ const list = await api(`/jobs/${jobId}/files`); return list.length; }catch(e){ return 0; }
+}
+
+async function renderJobs(){
+  let jobs;
+  try{
+    jobs = await api('/jobs');
+  }catch(err){
+    showToast(err.message || 'Could not load jobs');
+    return;
+  }
+  const active = jobs.filter(j=>j.stage<5);
+  const done = jobs.filter(j=>j.stage===5);
+
+  currentJobs = await Promise.all(active.map(async j=>({
+    name:j.name, ref:j.ref, files:await fileCountFor(j.id), spec:j.spec, turn:j.turnaround, stage:j.stage,
+    due: j.stage===0 ? 'Awaiting acceptance' : (j.due_date ? 'Due '+new Date(j.due_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : 'In progress')
+  })));
+
+  completedJobs = await Promise.all(done.map(async j=>{
+    const filesCount = await fileCountFor(j.id);
+    let inv = {invoice_number:'—', lines:[], total_amount:0, paid_at:null};
+    try{ inv = await api(`/jobs/${j.id}/invoice`); }catch(e){}
+    return {
+      name:j.name, ref:j.ref,
+      date: inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—',
+      files: filesCount, spec:j.spec, inv: inv.invoice_number,
+      lines: inv.lines.map(l=>[l.description, String(l.qty), '£'+Number(l.amount).toFixed(2)]),
+      total: '£'+Number(inv.total_amount).toFixed(2)
+    };
+  }));
+
+  renderJobLists();
+}
+
+function renderJobLists(){
+  const wrap = document.getElementById('currentJobs');
+  wrap.innerHTML='';
+  const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];
+  currentJobs.forEach(j=>{
+    const stages = STAGES.map((s,i)=>{
+      const cls = i < j.stage ? 'done' : (i===j.stage ? 'now' : '');
+      return `<div class="stage ${cls}"><div class="conn"></div><div class="node"></div><div class="slabel">${s}</div></div>`;
+    }).join('');
+    const card = document.createElement('div');
+    card.className='job-card';
+    card.innerHTML = `
+      <div class="job-top">
+        <div>
+          <h3>${j.name}</h3>
+          <div class="job-ref">Ref <b>${j.ref}</b> · ${j.files.toLocaleString('en-GB')} files · ${j.spec}</div>
+        </div>
+        <span class="badge ${badgeMap[j.stage]}"><span class="badge-dot"></span>${STAGES[j.stage]}</span>
+      </div>
+      <div class="stage-rail">${stages}</div>
+      <div class="job-foot">
+        <span>Turnaround: <b>${j.turn}</b></span>
+        <span>${j.due}</span>
+      </div>`;
+    wrap.appendChild(card);
+  });
+
+  const tbody = document.getElementById('completedJobs');
+  tbody.innerHTML='';
+  completedJobs.forEach((j,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="jt-name">${j.name}</div><div class="jt-sub">Ref ${j.ref}</div></td>
+      <td>${j.date}</td>
+      <td>${j.files.toLocaleString('en-GB')}</td>
+      <td>${j.spec}</td>
+      <td><button class="inv-btn" onclick="openInvoice(${i})">
+        <svg fill="none" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+        ${j.inv}</button></td>`;
+    tbody.appendChild(tr);
+  });
+  document.querySelector('#tabJobs .count').textContent = currentJobs.length;
+}
+
+/* ================= INVOICE ================= */
+function openInvoice(i){
+  const j = completedJobs[i];
+  document.getElementById('invNumber').textContent = j.inv;
+  document.getElementById('invDate').textContent = j.date;
+  document.getElementById('invRef').textContent = j.ref + ' · ' + j.name;
+  const lines = document.getElementById('invLines');
+  lines.innerHTML='';
+  j.lines.forEach(l=>{
+    lines.innerHTML += `<tr><td>${l[0]}<small>${j.name}</small></td><td>${l[1]}</td><td>${l[2]}</td></tr>`;
+  });
+  document.getElementById('invSub').textContent = j.total;
+  document.getElementById('invTotal').textContent = j.total;
+  document.getElementById('invoiceOverlay').classList.remove('hidden');
+}
+function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add('hidden'); }
+
+/* ================= TOAST ================= */
+let toastTimer;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+/* Enter key on login */
+document.getElementById('loginPass').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
