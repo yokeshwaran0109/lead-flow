@@ -8,11 +8,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60 * 24 * 7
 
-    r2_account_id: str = ""
-    r2_access_key_id: str = ""
-    r2_secret_access_key: str = ""
-    r2_bucket_name: str = ""
-    r2_endpoint_url: str = ""
+    b2_key_id: str = ""
+    b2_application_key: str = ""
+    b2_bucket_name: str = ""
+    b2_endpoint_url: str = ""
+    b2_region: str = "us-east-005"
 
     resend_api_key: str = ""
     email_from: str = "noreply@leadflow.dev"

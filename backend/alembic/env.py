@@ -14,6 +14,7 @@ from app.models import file, invoice, job, studio  # noqa: E402,F401
 config = context.config
 # alembic needs a sync driver — swap the asyncpg driver for the plain postgresql one
 sync_url = settings.database_url.replace("+asyncpg", "")
+sync_url += ("&" if "?" in sync_url else "?") + "sslmode=require"
 config.set_main_option("sqlalchemy.url", sync_url)
 
 if config.config_file_name is not None:

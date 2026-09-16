@@ -10,7 +10,7 @@ from app.models.file import JobFile
 from app.models.job import Job
 from app.models.studio import Studio
 from app.schemas.file import FileOut, FilePresignRequestBatch, FilePresignResponse
-from app.services.r2_storage import generate_presigned_put_url
+from app.services.b2_storage import generate_presigned_put_url
 
 router = APIRouter(prefix="/jobs/{job_id}/files", tags=["files"])
 
