@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.models.job import Job
 from app.models.studio import Studio
 from app.schemas.job import JobCreate, JobOut, StageUpdate
+from app.services.email import send_email
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -63,4 +64,12 @@ async def update_stage(job_id: uuid.UUID, data: StageUpdate, db: AsyncSession = 
     job.stage = data.stage.value
     await db.commit()
     await db.refresh(job)
+    studio = await db.get(Studio, job.studio_id)
+    if studio:
+        stage_label = data.stage.name.replace("_", " ").title()
+        send_email(
+            studio.email,
+            f"{job.ref} moved to {stage_label}",
+            f"<p>Your job {job.ref} ({job.name}) is now: {stage_label}.</p>",
+        )
     return job

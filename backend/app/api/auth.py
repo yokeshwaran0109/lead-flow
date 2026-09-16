@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.studio import Studio
 from app.schemas.auth import StudioLogin, StudioOut, StudioSignup, Token
+from app.services.email import send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -25,6 +26,7 @@ async def signup(data: StudioSignup, db: AsyncSession = Depends(get_db)):
     db.add(studio)
     await db.commit()
     await db.refresh(studio)
+    send_email(studio.email, "Welcome to Lead Flow", f"<p>Hi {studio.name}, your account is ready.</p>")
     token = create_access_token(str(studio.id))
     return Token(access_token=token)
 

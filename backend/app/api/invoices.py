@@ -12,6 +12,7 @@ from app.models.invoice import Invoice
 from app.models.job import Job, Stage
 from app.models.studio import Studio
 from app.schemas.invoice import InvoiceCreate, InvoiceOut
+from app.services.email import send_email
 
 router = APIRouter(prefix="/jobs/{job_id}/invoice", tags=["invoices"])
 
@@ -50,6 +51,13 @@ async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSessio
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invoice already exists for this job")
     await db.refresh(invoice)
+    studio = await db.get(Studio, job.studio_id)
+    if studio:
+        send_email(
+            studio.email,
+            f"Invoice {invoice.invoice_number} for {job.ref}",
+            f"<p>Invoice {invoice.invoice_number} for {job.ref} ({job.name}): ${invoice.total_amount}.</p>",
+        )
     return invoice
 
 
@@ -63,4 +71,11 @@ async def mark_paid(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     job.stage = Stage.INVOICE_PAID.value
     await db.commit()
     await db.refresh(job.invoice)
+    studio = await db.get(Studio, job.studio_id)
+    if studio:
+        send_email(
+            studio.email,
+            f"Payment received for {job.ref}",
+            f"<p>Thanks — we've received payment for {job.ref} ({job.name}).</p>",
+        )
     return job.invoice
