@@ -1146,20 +1146,21 @@ async function renderAdminCompletedJobs(jobs){
     return;
   }
   const rows = await Promise.all(jobs.map(async j=>{
-    let detail = {files:[], invoice:null};
+    let detail = {files:[], invoice:null, updated_at:null};
     try{ detail = await api(`/admin/jobs/${j.id}`); }catch(e){}
-    const inv = detail.invoice || {invoice_number:'—', total_amount:0, paid_at:null};
+    const inv = detail.invoice;
+    const deliveredAt = (inv && inv.paid_at) || detail.updated_at;
     return {
       name:j.name, ref:j.ref, studio:j.studio.name,
-      delivered: inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—',
+      delivered: deliveredAt ? new Date(deliveredAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—',
       files: (detail.files||[]).length, spec:j.spec,
-      invNumber: inv.invoice_number, total: Number(inv.total_amount||0).toFixed(2)
+      invText: inv ? `${inv.invoice_number} · £${Number(inv.total_amount).toFixed(2)}` : 'No invoice raised'
     };
   }));
   tbody.innerHTML = '';
   rows.forEach(r=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><div class="jt-name">${r.name}</div><div class="jt-sub">Ref ${r.ref} · ${r.studio}</div></td><td>${r.delivered}</td><td>${r.files.toLocaleString('en-GB')}</td><td>${r.spec}</td><td>${r.invNumber} · £${r.total}</td>`;
+    tr.innerHTML = `<td><div class="jt-name">${r.name}</div><div class="jt-sub">Ref ${r.ref} · ${r.studio}</div></td><td>${r.delivered}</td><td>${r.files.toLocaleString('en-GB')}</td><td>${r.spec}</td><td>${r.invText}</td>`;
     tbody.appendChild(tr);
   });
 }

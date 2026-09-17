@@ -25,6 +25,7 @@ class JobOut(BaseModel):
     stage: int
     due_date: datetime | None
     created_at: datetime
+    updated_at: datetime
 
 
 class StageUpdate(BaseModel):
