@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     b2_endpoint_url: str = ""
     b2_region: str = "us-east-005"
 
-    resend_api_key: str = ""
-    email_from: str = "noreply@leadflow.dev"
+    postmark_api_token: str = ""
+    email_from: str = "info@elyonediting.com"
 
     cors_origins: list[str] = ["*"]
 
