@@ -199,15 +199,6 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 .impersonate-exit:hover{background:var(--gold);color:#14110e}
 
-.tat-badge{
-  display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:100px;
-  font-size:11.5px;font-weight:700;letter-spacing:.02em;
-}
-.tat-ok{background:rgba(125,169,122,.15);color:var(--green)}
-.tat-warn{background:var(--gold-dim);color:var(--gold-bright)}
-.tat-late{background:rgba(192,122,106,.18);color:var(--red)}
-.tat-none{background:var(--bg-raise);color:var(--ink-dim)}
-
 .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
 .page-head{margin-bottom:34px}
 .page-head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:8px}
@@ -744,8 +735,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
 <div class="overlay hidden" id="adminJobDetailOverlay" onclick="if(event.target===this)closeAdminJobDetail()">
   <div class="modal">
     <div class="modal-pad">
-      <h3 id="ajdTitle" style="font-size:20px;font-weight:700;margin-bottom:4px">Job details</h3>
-      <div id="ajdTat" style="margin-bottom:18px"></div>
+      <h3 id="ajdTitle" style="font-size:20px;font-weight:700;margin-bottom:18px">Job details</h3>
       <div class="inv-meta">
         <div><div class="lbl">Studio</div><div id="ajdStudio">—</div></div>
         <div><div class="lbl">Edit specification</div><div id="ajdSpec">—</div></div>
@@ -1175,23 +1165,6 @@ function renderAdminStudios(studios){
   });
 }
 
-function fmtHours(h){
-  if(h < 1) return Math.round(h*60)+'m';
-  return Math.round(h)+'h';
-}
-function tatInfo(job){
-  if(job.stage >= 3) return {label:'Delivered', cls:'tat-ok'};
-  if(!job.due_date) return {label:'No TAT set', cls:'tat-none'};
-  const diffH = (new Date(job.due_date) - new Date()) / 3600000;
-  if(diffH < 0) return {label:'Overdue by '+fmtHours(-diffH), cls:'tat-late'};
-  if(diffH <= 6) return {label:fmtHours(diffH)+' left', cls:'tat-warn'};
-  return {label:fmtHours(diffH)+' left', cls:'tat-ok'};
-}
-function tatBadgeHtml(job){
-  const t = tatInfo(job);
-  return `<span class="tat-badge ${t.cls}">${t.label}</span>`;
-}
-
 function renderAdminJobs(jobs){
   const wrap = document.getElementById('adminJobs');
   wrap.innerHTML='';
@@ -1213,10 +1186,7 @@ function renderAdminJobs(jobs){
           <h3>${j.name}</h3>
           <div class="job-ref">Ref <b>${j.ref}</b> · ${j.studio.name} · ${j.spec}</div>
         </div>
-        <span style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-          <span class="badge ${badgeMap[j.stage]}"><span class="badge-dot"></span>${STAGES[j.stage]}</span>
-          ${tatBadgeHtml(j)}
-        </span>
+        <span class="badge ${badgeMap[j.stage]}"><span class="badge-dot"></span>${STAGES[j.stage]}</span>
       </div>
       <div class="job-foot" style="margin-top:18px">
         <span>Turnaround: <b>${j.turnaround}</b></span>
@@ -1253,7 +1223,6 @@ async function openAdminJobDetail(jobId){
   const notesEl = document.getElementById('ajdNotes');
   const filesEl = document.getElementById('ajdFiles');
   document.getElementById('ajdTitle').textContent = 'Job details';
-  document.getElementById('ajdTat').innerHTML = '';
   document.getElementById('ajdStudio').textContent = '—';
   document.getElementById('ajdSpec').textContent = '—';
   document.getElementById('ajdTurnaround').textContent = '—';
@@ -1264,7 +1233,6 @@ async function openAdminJobDetail(jobId){
   try{
     const job = await api(`/admin/jobs/${jobId}`);
     document.getElementById('ajdTitle').textContent = `${job.name} · Ref ${job.ref}`;
-    document.getElementById('ajdTat').innerHTML = tatBadgeHtml(job);
     document.getElementById('ajdStudio').textContent = job.studio.name;
     document.getElementById('ajdSpec').textContent = job.spec;
     document.getElementById('ajdTurnaround').textContent = job.turnaround;
