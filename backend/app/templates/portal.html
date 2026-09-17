@@ -335,6 +335,8 @@ table.jobs-table{width:100%;border-collapse:collapse}
   display:inline-flex;align-items:center;gap:7px;transition:all .2s;
 }
 .inv-btn:hover{border-color:var(--gold);background:var(--gold-dim)}
+.inv-btn:disabled{color:var(--ink-dim);cursor:not-allowed}
+.inv-btn:disabled:hover{border-color:var(--line);background:none}
 .inv-btn svg{width:14px;height:14px;stroke:currentColor}
 
 /* ---------- modals & toast ---------- */
@@ -674,6 +676,26 @@ table.jobs-table{width:100%;border-collapse:collapse}
   </div>
 </div>
 
+<!-- ============ ADMIN: JOB FILES & NOTES MODAL ============ -->
+<div class="overlay hidden" id="adminJobDetailOverlay" onclick="if(event.target===this)closeAdminJobDetail()">
+  <div class="modal">
+    <div class="modal-pad">
+      <h3 id="ajdTitle" style="font-size:20px;font-weight:700;margin-bottom:18px">Job files &amp; notes</h3>
+      <div class="field">
+        <label>Notes from studio</label>
+        <div id="ajdNotes" style="background:var(--bg-raise);border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--ink-mid);font-size:14px;min-height:20px">—</div>
+      </div>
+      <div class="field">
+        <label>Session files</label>
+        <div class="filelist" id="ajdFiles"></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="closeAdminJobDetail()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
 
 <script>
@@ -977,7 +999,7 @@ function renderAdminJobs(jobs){
   const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];
   jobs.forEach(j=>{
     const stageOptions = STAGES.map((s,i)=>`<option value="${i}" ${i===j.stage?'selected':''}>${s}</option>`).join('');
-    let actionHtml = `<select style="width:auto;padding:9px 12px" onchange="adminSetStage('${j.id}', this.value)">${stageOptions}</select>`;
+    let actionHtml = `<button class="inv-btn" onclick="openAdminJobDetail('${j.id}')">Files &amp; notes</button> <select style="width:auto;padding:9px 12px" onchange="adminSetStage('${j.id}', this.value)">${stageOptions}</select>`;
     if(j.stage===3){
       actionHtml += ` <button class="inv-btn" onclick="openAdminInvoice('${j.id}')">Send invoice</button>`;
     }else if(j.stage===4){
@@ -1018,6 +1040,50 @@ async function adminMarkPaid(jobId){
     renderAdmin();
   }catch(err){
     showToast(err.message || 'Could not mark paid');
+  }
+}
+
+let adminJobDetailId = null;
+async function openAdminJobDetail(jobId){
+  adminJobDetailId = jobId;
+  const overlay = document.getElementById('adminJobDetailOverlay');
+  const notesEl = document.getElementById('ajdNotes');
+  const filesEl = document.getElementById('ajdFiles');
+  document.getElementById('ajdTitle').textContent = 'Job files & notes';
+  notesEl.textContent = 'Loading…';
+  filesEl.innerHTML = '';
+  overlay.classList.remove('hidden');
+  try{
+    const job = await api(`/admin/jobs/${jobId}`);
+    document.getElementById('ajdTitle').textContent = `${job.name} · Ref ${job.ref}`;
+    notesEl.textContent = job.notes || 'No notes provided.';
+    if(!job.files.length){
+      filesEl.innerHTML = '<div style="color:var(--ink-dim);font-size:13.5px">No files on this job.</div>';
+    }else{
+      job.files.forEach(f=>{
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `
+          <div class="thumb">${f.uploaded ? 'FILE' : '…'}</div>
+          <div class="fmeta">
+            <div class="fname">${f.filename}</div>
+            <div class="fsize">${(f.size_bytes/1048576).toFixed(1)} MB</div>
+          </div>
+          <button class="inv-btn" ${f.uploaded ? '' : 'disabled'} onclick="downloadAdminFile('${jobId}','${f.id}')">Download</button>`;
+        filesEl.appendChild(row);
+      });
+    }
+  }catch(err){
+    notesEl.textContent = err.message || 'Could not load job details';
+  }
+}
+function closeAdminJobDetail(){ document.getElementById('adminJobDetailOverlay').classList.add('hidden'); }
+async function downloadAdminFile(jobId, fileId){
+  try{
+    const res = await api(`/admin/jobs/${jobId}/files/${fileId}/download`);
+    window.open(res.download_url, '_blank');
+  }catch(err){
+    showToast(err.message || 'Could not get download link');
   }
 }
 
