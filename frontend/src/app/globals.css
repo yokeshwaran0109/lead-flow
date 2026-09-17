@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg text-ink;
+  }
+  ::selection {
+    background: #e8540b;
+    color: #14110e;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-5 py-3 text-sm font-semibold tracking-wide transition-all;
+  }
+  .btn-gold {
+    @apply bg-gold text-[#14110e] hover:bg-goldbright hover:-translate-y-px disabled:bg-[#4a4032] disabled:text-[#877c69] disabled:translate-y-0;
+  }
+  .btn-ghost {
+    @apply border border-line bg-transparent text-inkmid hover:border-gold hover:text-goldbright;
+  }
+  .card {
+    @apply rounded-card border border-linesoft bg-bgcard p-6;
+  }
+  .field-input {
+    @apply w-full rounded-[10px] border border-line bg-bgraise px-4 py-3 text-[15px] text-ink transition-colors focus:border-gold focus:outline-none;
+  }
+  .field-label {
+    @apply mb-2 block font-display text-xs font-semibold uppercase tracking-widest text-inkdim;
+  }
+  .eyebrow {
+    @apply font-display text-[11px] font-semibold uppercase tracking-[0.22em] text-gold;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide;
+  }
+  .badge-dot {
+    @apply h-1.5 w-1.5 rounded-full bg-current;
+  }
+}

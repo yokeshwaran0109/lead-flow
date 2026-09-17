@@ -1,0 +1,14 @@
+# Run on the Linode VM: docker compose -f deploy/docker-compose.yml up -d
+# Expects a sibling .env file (see .env.example) — DATABASE_URL should point
+# at your managed Postgres (e.g. Neon), not a local container, unless you
+# add a postgres service here yourself.
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "127.0.0.1:8000:8000"

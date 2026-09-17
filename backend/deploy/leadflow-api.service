@@ -1,0 +1,26 @@
+# Alternative to Docker: run uvicorn directly via a venv on the Linode VM.
+# Install:
+#   sudo cp deploy/leadflow-api.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now leadflow-api
+#
+# Assumes the repo lives at /srv/leadflow/backend with a venv at
+# /srv/leadflow/backend/.venv (python -m venv .venv && .venv/bin/pip install -r requirements.txt)
+# and a real .env file at /srv/leadflow/backend/.env (chmod 600, owned by the service user).
+
+[Unit]
+Description=Lead Flow API (FastAPI/uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=leadflow
+Group=leadflow
+WorkingDirectory=/srv/leadflow/backend
+EnvironmentFile=/srv/leadflow/backend/.env
+ExecStart=/srv/leadflow/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 2
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
