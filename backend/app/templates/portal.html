@@ -277,7 +277,15 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
   font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);
   font-family:'Urbanist',sans-serif;font-weight:700;
 }
-.job-toolbar-sort select{min-width:160px}
+.sort-btn{
+  display:inline-flex;align-items:center;gap:6px;background:none;
+  border:1px solid var(--line);border-radius:8px;color:var(--ink-mid);
+  font-size:13px;font-weight:600;padding:7px 12px;transition:all .2s;
+}
+.sort-btn:hover{border-color:var(--ink-dim);color:var(--ink)}
+.sort-btn.active{border-color:var(--gold);color:var(--gold-bright);background:var(--gold-dim)}
+.sort-arrow{display:inline-flex;width:14px;height:14px}
+.sort-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 .stat-tile .stat-label{
   font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);
   font-family:'Urbanist',sans-serif;font-weight:700;margin-bottom:8px;
@@ -801,12 +809,9 @@ table.jobs-table{width:100%;border-collapse:collapse}
             </div>
             <div class="job-toolbar-row job-toolbar-sort">
               <span class="sort-label">Sort by</span>
-              <select id="jobSortBy" onchange="applyAdminJobFilters()">
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-                <option value="order">Order number</option>
-                <option value="status">Status</option>
-              </select>
+              <button class="sort-btn active" id="sortBtnDate" onclick="toggleSort('date')">Date<span class="sort-arrow" id="sortArrowDate"></span></button>
+              <button class="sort-btn" id="sortBtnOrder" onclick="toggleSort('order')">Order<span class="sort-arrow" id="sortArrowOrder"></span></button>
+              <button class="sort-btn" id="sortBtnStatus" onclick="toggleSort('status')">Status<span class="sort-arrow" id="sortArrowStatus"></span></button>
             </div>
           </div>
           <div id="adminJobs"></div>
@@ -1407,6 +1412,31 @@ function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add
 /* ================= ADMIN ================= */
 let allAdminJobs = [];
 let adminStatFilter = 'total';
+let adminSortField = 'date';
+let adminSortDir = 'desc';
+const SORT_ICONS = {
+  neutral: '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>',
+  asc: '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5"/></svg>',
+  desc: '<svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>'
+};
+function updateSortButtons(){
+  ['Date','Order','Status'].forEach(f=>{
+    const key = f.toLowerCase();
+    const isActive = adminSortField === key;
+    document.getElementById('sortBtn'+f).classList.toggle('active', isActive);
+    document.getElementById('sortArrow'+f).innerHTML = isActive ? SORT_ICONS[adminSortDir] : SORT_ICONS.neutral;
+  });
+}
+function toggleSort(field){
+  if(adminSortField === field){
+    adminSortDir = adminSortDir === 'asc' ? 'desc' : 'asc';
+  }else{
+    adminSortField = field;
+    adminSortDir = field === 'date' ? 'desc' : 'asc';
+  }
+  updateSortButtons();
+  applyAdminJobFilters();
+}
 
 function setAdminStatFilter(filter){
   adminStatFilter = filter;
@@ -1419,6 +1449,7 @@ function setAdminStatFilter(filter){
 }
 
 function applyAdminJobFilters(){
+  updateSortButtons();
   let jobs = allAdminJobs;
   if(adminStatFilter === 'progress') jobs = jobs.filter(j=>j.stage<3);
   else if(adminStatFilter === 'completed') jobs = jobs.filter(j=>j.stage===5);
@@ -1430,12 +1461,12 @@ function applyAdminJobFilters(){
   if(statusVal !== '') jobs = jobs.filter(j=>String(j.stage)===statusVal);
   const serviceVal = document.getElementById('jobSearchService').value;
   if(serviceVal !== '') jobs = jobs.filter(j=>j.spec===serviceVal);
-  const sortBy = document.getElementById('jobSortBy').value;
   jobs = jobs.slice().sort((a,b)=>{
-    if(sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
-    if(sortBy === 'order') return a.ref.localeCompare(b.ref, undefined, {numeric:true});
-    if(sortBy === 'status') return a.stage - b.stage;
-    return new Date(b.created_at) - new Date(a.created_at);
+    let cmp;
+    if(adminSortField === 'order') cmp = a.ref.localeCompare(b.ref, undefined, {numeric:true});
+    else if(adminSortField === 'status') cmp = a.stage - b.stage;
+    else cmp = new Date(a.created_at) - new Date(b.created_at);
+    return adminSortDir === 'asc' ? cmp : -cmp;
   });
   renderAdminJobs(jobs);
 }
