@@ -293,8 +293,43 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
   font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
   color:var(--ink-dim);padding:0 16px;margin-bottom:6px;font-family:'Urbanist',sans-serif;
 }
-.page-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:34px}
-.page-head-row .page-head{margin-bottom:0}
+.admin-sidebar-head{padding:4px 10px 22px;border-bottom:1px solid var(--line-soft);margin-bottom:18px}
+.admin-sidebar-head .wordmark{font-family:'Urbanist',sans-serif;font-weight:800;font-size:17px;letter-spacing:.02em}
+.admin-sidebar-head .wordmark span{color:var(--gold)}
+.admin-sidebar-head .wordmark small{display:block;font-size:9.5px;font-weight:600;letter-spacing:.2em;color:var(--ink-dim);text-transform:uppercase;margin-top:-2px}
+.admin-badge{
+  display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+  background:var(--gold-dim);border:1px solid rgba(232,84,11,.25);
+  border-radius:100px;padding:5px 12px;font-size:11px;font-weight:700;
+  color:var(--gold-bright);letter-spacing:.08em;text-transform:uppercase;font-family:'Urbanist',sans-serif;
+}
+.admin-badge svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid var(--line-soft)}
+.admin-topbar h1{font-size:22px;font-weight:700}
+.admin-topbar-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.notif-wrap{position:relative}
+.notif-btn{
+  position:relative;width:40px;height:40px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg-card);color:var(--ink-mid);
+  display:flex;align-items:center;justify-content:center;transition:all .2s;
+}
+.notif-btn:hover{border-color:var(--gold);color:var(--gold-bright)}
+.notif-icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.notif-dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--gold);border:2px solid var(--bg-card)}
+.notif-panel{
+  position:absolute;top:48px;right:0;width:300px;max-height:360px;overflow-y:auto;
+  background:var(--bg-card);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:80;padding:8px;
+}
+.notif-panel-head{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);font-weight:700;padding:8px 10px;font-family:'Urbanist',sans-serif}
+.notif-item{padding:10px;border-radius:9px;font-size:13px;color:var(--ink)}
+.notif-item:hover{background:var(--bg-raise)}
+.notif-time{font-size:11px;color:var(--ink-dim);margin-top:2px}
+.notif-empty{padding:16px 10px;font-size:13px;color:var(--ink-dim)}
+@media (max-width:600px){
+  .admin-topbar{flex-wrap:wrap}
+  .notif-panel{right:-40px;width:270px}
+}
 .clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
 .client-card{
   background:var(--bg-card);border:1px solid var(--line-soft);
@@ -796,6 +831,13 @@ table.jobs-table{width:100%;border-collapse:collapse}
     <!-- ======== ADMIN VIEW ======== -->
     <div id="viewAdmin" class="hidden admin-shell">
       <div class="admin-sidebar">
+        <div class="admin-sidebar-head">
+          <div class="wordmark">LEAD<span>FLOW</span><small>Admin Panel</small></div>
+          <div class="admin-badge">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+            Admin
+          </div>
+        </div>
         <div class="nav-section">
           <div class="nav-label">Overview</div>
           <button class="admin-nav-item active" id="navDashboard" onclick="switchAdminSection('dashboard')">
@@ -824,14 +866,26 @@ table.jobs-table{width:100%;border-collapse:collapse}
         </div>
       </div>
       <div class="admin-content">
-        <div id="adminSectionDashboard">
-          <div class="page-head-row">
-            <div class="page-head">
-              <div class="eyebrow">Admin control</div>
-              <h1>Dashboard</h1>
-              <p>Every order placed, from the start until now. Advance stages, send invoices, and mark payments.</p>
+        <div class="admin-topbar">
+          <h1 id="adminPageTitle">Dashboard</h1>
+          <div class="admin-topbar-actions">
+            <div class="notif-wrap">
+              <button class="notif-btn" id="notifBtn" onclick="toggleNotifPanel()">
+                <svg class="notif-icon" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/></svg>
+                <span class="notif-dot hidden" id="notifDot"></span>
+              </button>
+              <div class="notif-panel hidden" id="notifPanel">
+                <div class="notif-panel-head">Notifications</div>
+                <div id="notifList"></div>
+              </div>
             </div>
             <button class="btn btn-gold" style="padding:11px 20px;font-size:13.5px;white-space:nowrap" onclick="openNewOrderModal()">+ New Order</button>
+          </div>
+        </div>
+        <div id="adminSectionDashboard">
+          <div class="page-head">
+            <div class="eyebrow">Admin control</div>
+            <p>Every order placed, from the start until now. Advance stages, send invoices, and mark payments.</p>
           </div>
           <div class="admin-stats">
             <div class="stat-tile active" id="statTileTotal" onclick="setAdminStatFilter('total')"><div class="stat-label">Total orders</div><div class="stat-value" id="statTotal">0</div></div>
@@ -873,13 +927,9 @@ table.jobs-table{width:100%;border-collapse:collapse}
         </div>
 
         <div id="adminSectionOrders" class="hidden">
-          <div class="page-head-row">
-            <div class="page-head">
-              <div class="eyebrow">Order management</div>
-              <h1>All Orders</h1>
-              <p>Every order across every studio, unfiltered.</p>
-            </div>
-            <button class="btn btn-gold" style="padding:11px 20px;font-size:13.5px;white-space:nowrap" onclick="openNewOrderModal()">+ New Order</button>
+          <div class="page-head">
+            <div class="eyebrow">Order management</div>
+            <p>Every order across every studio, unfiltered.</p>
           </div>
           <div class="job-toolbar">
             <div class="job-toolbar-row">
@@ -904,7 +954,6 @@ table.jobs-table{width:100%;border-collapse:collapse}
         <div id="adminSectionClients" class="hidden">
           <div class="page-head">
             <div class="eyebrow">Admin control</div>
-            <h1>Clients</h1>
             <p>Every studio using Lead Flow.</p>
           </div>
           <div class="clients-grid" id="clientsGrid"></div>
@@ -913,7 +962,6 @@ table.jobs-table{width:100%;border-collapse:collapse}
         <div id="adminSectionInvoices" class="hidden">
           <div class="page-head">
             <div class="eyebrow">Finance</div>
-            <h1>Invoices</h1>
             <p>Every invoice sent or paid, across all client studios.</p>
           </div>
           <div class="section-label"><h2>Awaiting invoice</h2><div class="rule"></div></div>
@@ -930,7 +978,6 @@ table.jobs-table{width:100%;border-collapse:collapse}
         <div id="adminSectionAnalytics" class="hidden">
           <div class="page-head">
             <div class="eyebrow">Reporting</div>
-            <h1>Analytics</h1>
             <p>Revenue trends and order volume across all studios.</p>
           </div>
           <div class="admin-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
@@ -998,7 +1045,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
       <div class="inv-paid hidden" id="invPaidStamp">✓ Paid</div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="showToast('Demo only — PDF download not wired up')">Download PDF</button>
+      <button class="btn btn-ghost" onclick="downloadInvoicePdf()">Download PDF</button>
       <button class="btn btn-gold" onclick="closeInvoice()">Close</button>
     </div>
   </div>
@@ -1129,6 +1176,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
 
 <div class="toast" id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 /* ================= CONFIG / STATE ================= */
 const API_BASE = '';
@@ -1416,6 +1464,7 @@ function switchTab(t){
 }
 
 const ADMIN_SECTIONS = ['dashboard','orders','clients','invoices','analytics'];
+const ADMIN_SECTION_TITLES = {dashboard:'Dashboard', orders:'All Orders', clients:'Clients', invoices:'Invoices', analytics:'Analytics'};
 function switchAdminSection(section){
   ADMIN_SECTIONS.forEach(key=>{
     const navId = 'nav'+key.charAt(0).toUpperCase()+key.slice(1);
@@ -1423,11 +1472,40 @@ function switchAdminSection(section){
     const sectionId = 'adminSection'+key.charAt(0).toUpperCase()+key.slice(1);
     document.getElementById(sectionId).classList.toggle('hidden', key!==section);
   });
+  document.getElementById('adminPageTitle').textContent = ADMIN_SECTION_TITLES[section] || section;
   if(section==='orders') applyOrdersFilter();
   if(section==='clients') renderAdminClients();
   if(section==='invoices') renderAdminInvoices();
   if(section==='analytics') loadAdminAnalytics();
 }
+
+/* ================= NOTIFICATIONS ================= */
+let adminNotifications = [];
+let knownStudioIds = null;
+function pushAdminNotification(text){
+  adminNotifications.unshift({text, time: new Date()});
+  if(adminNotifications.length>30) adminNotifications.length = 30;
+  document.getElementById('notifDot').classList.remove('hidden');
+}
+function toggleNotifPanel(){
+  const panel = document.getElementById('notifPanel');
+  const opening = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden');
+  if(opening) renderNotifList();
+}
+function renderNotifList(){
+  const list = document.getElementById('notifList');
+  list.innerHTML = adminNotifications.length
+    ? adminNotifications.map(n=>`<div class="notif-item">${n.text}<div class="notif-time">${n.time.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div></div>`).join('')
+    : '<div class="notif-empty">No notifications yet.</div>';
+  document.getElementById('notifDot').classList.add('hidden');
+}
+document.addEventListener('click', function(e){
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBtn');
+  if(!panel || panel.classList.contains('hidden')) return;
+  if(!panel.contains(e.target) && !btn.contains(e.target)) panel.classList.add('hidden');
+});
 
 /* ================= UPLOAD ================= */
 const dz = document.getElementById('dropzone');
@@ -1678,6 +1756,102 @@ function openInvoiceCurrent(i){
 }
 function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add('hidden'); }
 
+function downloadInvoicePdf(){
+  if(!window.jspdf){ showToast('PDF library still loading — try again in a moment'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const left = 48, right = 547;
+  let y = 56;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.text('ELYON', left, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(120,120,120);
+  doc.text('Editing Services via Lead Flow Gateway', left, y+14);
+
+  const invNumber = document.getElementById('invNumber').textContent.trim();
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(150,150,150);
+  doc.text('INVOICE', right, y-6, {align:'right'});
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(20,20,20);
+  doc.text(invNumber, right, y+10, {align:'right'});
+
+  y += 34;
+  doc.setDrawColor(220,220,220); doc.line(left, y, right, y);
+  y += 24;
+
+  const billedTo = document.getElementById('invBilledTo').innerText.trim();
+  const invDate = document.getElementById('invDate').textContent.trim();
+  const invRef = document.getElementById('invRef').textContent.trim();
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(140,140,140);
+  doc.text('BILLED TO', left, y);
+  doc.text('DETAILS', 320, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
+  billedTo.split('\n').forEach((line,i)=>doc.text(line, left, y+15+i*13));
+  doc.text(`Issued: ${invDate}`, 320, y+15);
+  doc.text(`Job ref: ${invRef}`, 320, y+29);
+
+  y += 60;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(140,140,140);
+  doc.text('DESCRIPTION', left, y);
+  doc.text('QTY', 380, y);
+  doc.text('AMOUNT', right, y, {align:'right'});
+  y += 8;
+  doc.setDrawColor(220,220,220); doc.line(left, y, right, y);
+  y += 16;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30,30,30);
+  document.querySelectorAll('#invLines tr').forEach(tr=>{
+    const tds = tr.querySelectorAll('td');
+    if(tds.length<3) return;
+    const desc = (tds[0].childNodes[0] ? tds[0].childNodes[0].textContent : '').trim();
+    const qty = tds[1].textContent.trim();
+    const amt = tds[2].textContent.trim();
+    doc.text(desc, left, y);
+    doc.text(qty, 380, y);
+    doc.text(amt, right, y, {align:'right'});
+    y += 18;
+  });
+
+  y += 6;
+  doc.setDrawColor(220,220,220); doc.line(left, y, right, y);
+  y += 20;
+
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(80,80,80);
+  doc.text('Subtotal', 460, y, {align:'right'});
+  doc.text(document.getElementById('invSub').textContent.trim(), right, y, {align:'right'});
+  y += 16;
+
+  const taxRow = document.getElementById('invTaxRow');
+  if(!taxRow.classList.contains('hidden')){
+    doc.text(document.getElementById('invTaxLabel').textContent.trim(), 460, y, {align:'right'});
+    doc.text(document.getElementById('invTaxAmt').textContent.trim(), right, y, {align:'right'});
+    y += 16;
+  }
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(20,20,20);
+  doc.text('Total', 460, y+6, {align:'right'});
+  doc.text(document.getElementById('invTotal').textContent.trim(), right, y+6, {align:'right'});
+  y += 34;
+
+  const noteBlock = document.getElementById('invNoteBlock');
+  if(!noteBlock.classList.contains('hidden')){
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(140,140,140);
+    doc.text('NOTE', left, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(60,60,60);
+    const wrapped = doc.splitTextToSize(document.getElementById('invNoteText').textContent.trim(), right-left);
+    doc.text(wrapped, left, y+14);
+    y += 14 + wrapped.length*13;
+  }
+
+  const paidStamp = document.getElementById('invPaidStamp');
+  if(!paidStamp.classList.contains('hidden')){
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(125,169,122);
+    doc.text('PAID', left, y+16);
+  }
+
+  doc.save(`${invNumber || 'invoice'}.pdf`);
+}
+
 /* ================= ADMIN ================= */
 let allAdminJobs = [];
 let adminStatFilter = 'total';
@@ -1748,9 +1922,16 @@ async function renderAdmin(){
     if(knownAdminJobIds !== null){
       jobs.filter(j=>!knownAdminJobIds.has(j.id)).forEach(j=>{
         showToast('New job added: '+j.name+' ('+j.studio.name+')');
+        pushAdminNotification('New order: '+j.name+' from '+j.studio.name+' ('+j.ref+')');
       });
     }
     knownAdminJobIds = new Set(jobs.map(j=>j.id));
+    if(knownStudioIds !== null){
+      studios.filter(s=>!knownStudioIds.has(s.id)).forEach(s=>{
+        pushAdminNotification('New client signed up: '+s.name);
+      });
+    }
+    knownStudioIds = new Set(studios.map(s=>s.id));
     document.getElementById('statTotal').textContent = jobs.length;
     document.getElementById('statProgress').textContent = jobs.filter(j=>j.stage<3).length;
     document.getElementById('statCompleted').textContent = jobs.filter(j=>j.stage===5).length;
@@ -1965,7 +2146,10 @@ function renderAdminJobs(jobs, containerId){
   if(!jobs.length){ wrap.innerHTML = '<div class="card">No jobs yet.</div>'; return; }
   const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];
   jobs.forEach(j=>{
-    const stageOptions = STAGES.map((s,i)=>`<option value="${i}" ${i===j.stage?'selected':''}>${s}</option>`).join('');
+    const stageOptions = STAGES.map((s,i)=>{
+      const locked = i < j.stage || i===4 || i===5;
+      return `<option value="${i}" ${i===j.stage?'selected':''} ${locked?'disabled':''}>${s}${i<j.stage?' ✓':''}</option>`;
+    }).join('');
     let actionHtml = `<button class="inv-btn" onclick="openAdminJobDetail('${j.id}')">Files &amp; notes</button> <select style="width:auto;padding:9px 12px" onchange="adminSetStage('${j.id}', this.value)">${stageOptions}</select>`;
     if(j.stage===3){
       actionHtml += ` <button class="inv-btn" onclick="openAdminInvoice('${j.id}')">Send invoice</button>`;
