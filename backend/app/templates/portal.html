@@ -1870,6 +1870,10 @@ function renderAdminJobs(jobs, containerId){
     }else if(j.stage===4){
       actionHtml += ` <button class="inv-btn" onclick="adminMarkPaid('${j.id}')">Mark paid</button>`;
     }
+    const stages = STAGES.map((s,i)=>{
+      const cls = i < j.stage ? 'done' : (i===j.stage ? 'now' : '');
+      return `<div class="stage ${cls}"><div class="conn"></div><div class="node"></div><div class="slabel">${s}</div></div>`;
+    }).join('');
     const card = document.createElement('div');
     card.className='job-card';
     card.innerHTML = `
@@ -1880,7 +1884,8 @@ function renderAdminJobs(jobs, containerId){
         </div>
         <span class="badge ${badgeMap[j.stage]}"><span class="badge-dot"></span>${STAGES[j.stage]}</span>
       </div>
-      <div class="job-foot" style="margin-top:18px">
+      <div class="stage-rail">${stages}</div>
+      <div class="job-foot">
         <span>Turnaround: <b>${j.turnaround}</b></span>
         <span style="display:flex;align-items:center;gap:10px">${actionHtml}</span>
       </div>`;
