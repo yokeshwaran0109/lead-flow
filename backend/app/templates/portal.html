@@ -651,6 +651,16 @@ table.jobs-table{width:100%;border-collapse:collapse}
 
       <div class="section-label"><h2>Jobs</h2><div class="rule"></div></div>
       <div id="adminJobs"></div>
+
+      <div class="section-label" style="margin-top:34px"><h2>Completed jobs</h2><div class="rule"></div></div>
+      <div class="card" style="padding:8px 4px">
+        <table class="jobs-table">
+          <thead>
+            <tr><th>Job</th><th>Delivered</th><th>Files</th><th>Spec</th><th>Invoice</th></tr>
+          </thead>
+          <tbody id="adminCompletedJobs"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -1121,10 +1131,37 @@ async function renderAdmin(){
     }
     knownAdminJobIds = new Set(jobs.map(j=>j.id));
     renderAdminStudios(studios);
-    renderAdminJobs(jobs);
+    renderAdminJobs(jobs.filter(j=>j.stage<5));
+    await renderAdminCompletedJobs(jobs.filter(j=>j.stage===5));
   }catch(err){
     showToast(err.message || 'Could not load admin data');
   }
+}
+
+async function renderAdminCompletedJobs(jobs){
+  const tbody = document.getElementById('adminCompletedJobs');
+  tbody.innerHTML = '';
+  if(!jobs.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="color:var(--ink-dim)">No completed jobs yet.</td></tr>';
+    return;
+  }
+  const rows = await Promise.all(jobs.map(async j=>{
+    let detail = {files:[], invoice:null};
+    try{ detail = await api(`/admin/jobs/${j.id}`); }catch(e){}
+    const inv = detail.invoice || {invoice_number:'—', total_amount:0, paid_at:null};
+    return {
+      name:j.name, ref:j.ref, studio:j.studio.name,
+      delivered: inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—',
+      files: (detail.files||[]).length, spec:j.spec,
+      invNumber: inv.invoice_number, total: Number(inv.total_amount||0).toFixed(2)
+    };
+  }));
+  tbody.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><div class="jt-name">${r.name}</div><div class="jt-sub">Ref ${r.ref} · ${r.studio}</div></td><td>${r.delivered}</td><td>${r.files.toLocaleString('en-GB')}</td><td>${r.spec}</td><td>${r.invNumber} · £${r.total}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 function renderAdminStudios(studios){
