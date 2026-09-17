@@ -119,6 +119,9 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 .login-card .btn{width:100%;margin-top:8px}
 .login-foot{margin-top:28px;text-align:center;font-size:12.5px;color:var(--ink-dim)}
 .login-foot b{color:var(--ink-mid)}
+.auth-toggle{margin-top:18px;text-align:center;font-size:13px;color:var(--ink-dim)}
+.auth-toggle button{background:none;border:none;color:var(--gold-bright);font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.auth-toggle button:hover{color:var(--gold)}
 
 /* ---------- app shell ---------- */
 #appScreen{min-height:100vh;display:flex;flex-direction:column}
@@ -459,19 +462,44 @@ table.jobs-table{width:100%;border-collapse:collapse}
     </div>
   </div>
   <div class="login-right">
-    <div class="login-card">
+    <div class="login-card" id="signInCard">
       <div class="eyebrow">Studio sign in</div>
       <h2>Welcome back</h2>
       <div class="sub">Sign in with your Lead Flow studio credentials.</div>
       <div class="field">
         <label>Studio email</label>
-        <input type="email" id="loginEmail" value="studio@lightandlacestudios.co.uk">
+        <input type="email" id="loginEmail" autocomplete="username">
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" id="loginPass" value="demopassword">
+        <input type="password" id="loginPass" autocomplete="current-password">
       </div>
       <button class="btn btn-gold" onclick="doLogin()">Sign in to portal</button>
+      <div class="auth-toggle">New here? <button onclick="toggleAuthMode()">Create an account</button></div>
+      <div class="login-foot">Powered by <b>Lead Flow</b> · Editing by <b>Elyon</b></div>
+    </div>
+    <div class="login-card hidden" id="signUpCard">
+      <div class="eyebrow">Studio sign up</div>
+      <h2>Create your account</h2>
+      <div class="sub">Set up your studio to start sending shoots to Elyon.</div>
+      <div class="field">
+        <label>Studio name</label>
+        <input type="text" id="signupName" autocomplete="organization">
+      </div>
+      <div class="field">
+        <label>Studio email</label>
+        <input type="email" id="signupEmail" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="signupLocation" autocomplete="address-level2">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="signupPass" autocomplete="new-password">
+      </div>
+      <button class="btn btn-gold" onclick="doSignup()">Create account</button>
+      <div class="auth-toggle">Already have an account? <button onclick="toggleAuthMode()">Sign in</button></div>
       <div class="login-foot">Powered by <b>Lead Flow</b> · Editing by <b>Elyon</b></div>
     </div>
   </div>
@@ -767,8 +795,32 @@ async function doLogin(){
       enterStudioView(studio);
       showToast('Signed in as '+studio.name);
     }
+    startPolling();
   }catch(err){
     showToast(err.message || 'Sign in failed');
+  }
+}
+function toggleAuthMode(){
+  document.getElementById('signInCard').classList.toggle('hidden');
+  document.getElementById('signUpCard').classList.toggle('hidden');
+}
+async function doSignup(){
+  const name = document.getElementById('signupName').value.trim();
+  const email = document.getElementById('signupEmail').value.trim();
+  const location = document.getElementById('signupLocation').value.trim();
+  const password = document.getElementById('signupPass').value;
+  try{
+    const auth = await api('/auth/signup', {method:'POST', body:JSON.stringify({name,email,location,password})});
+    token = auth.access_token;
+    role = auth.role;
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    const studio = await api('/auth/me');
+    enterStudioView(studio);
+    showToast('Welcome, '+studio.name);
+    startPolling();
+  }catch(err){
+    showToast(err.message || 'Sign up failed');
   }
 }
 function enterStudioView(studio){
@@ -781,10 +833,31 @@ function enterStudioView(studio){
   switchTab('upload');
 }
 function doLogout(){
+  stopPolling();
   token = null;
   role = null;
+  knownAdminJobIds = null;
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+/* ================= LIVE SYNC ================= */
+let pollTimer = null;
+let knownAdminJobIds = null;
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(pollTick, 5000);
+}
+function stopPolling(){
+  if(pollTimer){ clearInterval(pollTimer); pollTimer = null; }
+}
+function pollTick(){
+  if(document.getElementById('appScreen').classList.contains('hidden')) return;
+  if(role === 'admin' && !document.getElementById('viewAdmin').classList.contains('hidden')){
+    renderAdmin();
+  }else if(role === 'studio' && !document.getElementById('viewJobs').classList.contains('hidden')){
+    renderJobs();
+  }
 }
 let savedAdminToken = null;
 async function impersonateStudio(studioId, studioName){
@@ -1025,6 +1098,12 @@ function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add
 async function renderAdmin(){
   try{
     const [studios, jobs] = await Promise.all([api('/admin/studios'), api('/admin/jobs')]);
+    if(knownAdminJobIds !== null){
+      jobs.filter(j=>!knownAdminJobIds.has(j.id)).forEach(j=>{
+        showToast('New job added: '+j.name+' ('+j.studio.name+')');
+      });
+    }
+    knownAdminJobIds = new Set(jobs.map(j=>j.id));
     renderAdminStudios(studios);
     renderAdminJobs(jobs);
   }catch(err){
