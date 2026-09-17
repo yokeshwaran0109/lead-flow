@@ -745,7 +745,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
           </div>
           <div class="card" style="padding:8px 4px">
             <table class="jobs-table">
-              <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th><th></th></tr></thead>
+              <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th></tr></thead>
               <tbody id="adminStudios"></tbody>
             </table>
           </div>
@@ -1458,7 +1458,7 @@ function renderAdminStudios(studios){
   tbody.innerHTML='';
   studios.forEach(s=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.location||'—'}</td><td>${s.plan}</td><td><button class="inv-btn" onclick="impersonateStudio('${s.id}','${s.name}')">Act as studio</button></td>`;
+    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.location||'—'}</td><td>${s.plan}</td>`;
     tbody.appendChild(tr);
   });
 }
