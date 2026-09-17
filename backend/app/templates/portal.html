@@ -852,7 +852,19 @@ table.jobs-table{width:100%;border-collapse:collapse}
 const API_BASE = '';
 let token = null;
 let role = null;
+let savedAdminToken = null;
 let files = [];
+
+function saveSession(t, r){
+  try{ localStorage.setItem('lf_token', t); localStorage.setItem('lf_role', r); }catch(e){}
+}
+function clearSession(){
+  try{
+    localStorage.removeItem('lf_token');
+    localStorage.removeItem('lf_role');
+    localStorage.removeItem('lf_saved_admin_token');
+  }catch(e){}
+}
 
 const STAGES = ['Received','In editing','Quality check','Delivered','Invoice sent','Invoice paid'];
 
@@ -882,6 +894,7 @@ async function doLogin(){
     const auth = await api('/auth/login', {method:'POST', body:JSON.stringify({email,password})});
     token = auth.access_token;
     role = auth.role;
+    saveSession(token, role);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appScreen').classList.remove('hidden');
     if(role === 'admin'){
@@ -941,6 +954,7 @@ async function doSetPassword(){
   }
   try{
     await api('/auth/set-password', {method:'POST', body:JSON.stringify({password})});
+    saveSession(token, role);
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appScreen').classList.remove('hidden');
     const studio = await api('/auth/me');
@@ -951,10 +965,7 @@ async function doSetPassword(){
     showToast(err.message || 'Could not set password');
   }
 }
-async function handleEmailConfirm(){
-  const params = new URLSearchParams(window.location.search);
-  const confirmToken = params.get('confirm');
-  if(!confirmToken) return;
+async function handleEmailConfirm(confirmToken){
   window.history.replaceState({}, '', window.location.pathname);
   try{
     const auth = await api('/auth/confirm', {method:'POST', body:JSON.stringify({token:confirmToken})});
@@ -965,7 +976,53 @@ async function handleEmailConfirm(){
     showToast(err.message || 'Confirmation link is invalid or expired');
   }
 }
-handleEmailConfirm();
+async function restoreSession(){
+  let savedToken, savedRole;
+  try{ savedToken = localStorage.getItem('lf_token'); savedRole = localStorage.getItem('lf_role'); }catch(e){ return; }
+  if(!savedToken || !savedRole) return;
+  token = savedToken;
+  role = savedRole;
+  try{
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    let savedAdmin = null;
+    try{ savedAdmin = localStorage.getItem('lf_saved_admin_token'); }catch(e){}
+    if(role === 'admin'){
+      const admin = await api('/admin/me');
+      document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = admin.name);
+      document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = 'Admin · Full access');
+      document.querySelector('.avatar').textContent = 'AD';
+      document.getElementById('tabUpload').classList.add('hidden');
+      document.getElementById('tabJobs').classList.add('hidden');
+      document.getElementById('tabAdmin').classList.remove('hidden');
+      switchTab('admin');
+    }else{
+      const studio = await api('/auth/me');
+      enterStudioView(studio);
+      if(savedAdmin){
+        savedAdminToken = savedAdmin;
+        document.getElementById('impersonateBar').classList.remove('hidden');
+        document.getElementById('impersonateName').textContent = studio.name;
+      }
+    }
+    startPolling();
+  }catch(err){
+    clearSession();
+    token = null;
+    role = null;
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+}
+(async function initAuth(){
+  const params = new URLSearchParams(window.location.search);
+  const confirmToken = params.get('confirm');
+  if(confirmToken){
+    await handleEmailConfirm(confirmToken);
+  }else{
+    await restoreSession();
+  }
+})();
 function enterStudioView(studio){
   document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = studio.name);
   document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = (studio.location ? studio.location+' · ' : '') + studio.plan);
@@ -979,7 +1036,9 @@ function doLogout(){
   stopPolling();
   token = null;
   role = null;
+  savedAdminToken = null;
   knownAdminJobIds = null;
+  clearSession();
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
 }
@@ -1002,13 +1061,14 @@ function pollTick(){
     renderJobs();
   }
 }
-let savedAdminToken = null;
 async function impersonateStudio(studioId, studioName){
   try{
     const res = await api(`/admin/studios/${studioId}/impersonate`, {method:'POST'});
     savedAdminToken = token;
     token = res.access_token;
     role = 'studio';
+    saveSession(token, role);
+    try{ localStorage.setItem('lf_saved_admin_token', savedAdminToken); }catch(e){}
     enterStudioView({name: res.studio_name, location:'', plan:'Acting on behalf'});
     document.getElementById('impersonateBar').classList.remove('hidden');
     document.getElementById('impersonateName').textContent = res.studio_name;
@@ -1021,6 +1081,8 @@ async function exitImpersonation(){
   token = savedAdminToken;
   savedAdminToken = null;
   role = 'admin';
+  saveSession(token, role);
+  try{ localStorage.removeItem('lf_saved_admin_token'); }catch(e){}
   document.getElementById('impersonateBar').classList.add('hidden');
   const admin = await api('/admin/me');
   document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = admin.name);
