@@ -201,10 +201,6 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 
 .welcome-banner{max-width:1180px;margin:0 auto;padding:32px 40px 0}
-.welcome-banner.admin-align{max-width:none;margin:0;padding-left:290px}
-@media (max-width:820px){
-  .welcome-banner.admin-align{padding-left:40px}
-}
 .welcome-name{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:800}
 .welcome-desc{color:var(--ink-mid);font-size:14px;margin-top:4px}
 
@@ -968,7 +964,11 @@ table.jobs-table{width:100%;border-collapse:collapse}
         <div class="row hidden" id="invTaxRow"><span id="invTaxLabel">Tax</span><span id="invTaxAmt">£0.00</span></div>
         <div class="row grand"><span>Total</span><span id="invTotal">£0.00</span></div>
       </div>
-      <div class="inv-paid">✓ Paid</div>
+      <div class="hidden" id="invNoteBlock" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line-soft)">
+        <div class="lbl">Note</div>
+        <div id="invNoteText" style="color:var(--ink-mid);font-size:13.5px;margin-top:4px">—</div>
+      </div>
+      <div class="inv-paid hidden" id="invPaidStamp">✓ Paid</div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="showToast('Demo only — PDF download not wired up')">Download PDF</button>
@@ -1035,17 +1035,35 @@ table.jobs-table{width:100%;border-collapse:collapse}
 <div class="overlay hidden" id="adminInvoiceOverlay" onclick="if(event.target===this)closeAdminInvoice()">
   <div class="modal">
     <div class="modal-pad">
-      <h3 style="font-size:20px;font-weight:700;margin-bottom:4px">Create &amp; send invoice</h3>
-      <div style="font-size:13px;color:var(--ink-mid);margin-bottom:18px" id="aiJobMeta">—</div>
-      <div class="field"><label>Line description</label><input type="text" id="aiDesc" value="Studio editing"></div>
-      <div style="display:flex;gap:14px">
-        <div class="field" style="flex:1"><label>Images (qty)</label><input type="number" id="aiQty" value="1" min="1" oninput="updateAdminInvoicePreview()"></div>
-        <div class="field" style="flex:1"><label>Rate per image (£)</label><input type="number" id="aiAmount" step="0.01" placeholder="0.00" oninput="updateAdminInvoicePreview()"></div>
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:18px">Create &amp; send invoice</h3>
+      <div class="inv-meta" style="margin-bottom:20px">
+        <div>
+          <div class="lbl">Company</div>
+          <div>Elyon Studio</div>
+        </div>
+        <div>
+          <div class="lbl">Invoice #</div>
+          <div id="aiInvNumber" style="color:var(--ink-dim)">—</div>
+        </div>
+        <div>
+          <div class="lbl">Billed to</div>
+          <div id="aiBilledTo">—</div>
+        </div>
+        <div>
+          <div class="lbl">Issued date</div>
+          <div id="aiIssuedDate" style="color:var(--ink-dim)">—</div>
+        </div>
       </div>
-      <div class="field"><label>Tax (%)</label><input type="number" id="aiTaxPct" step="0.01" value="0" min="0" oninput="updateAdminInvoicePreview()"></div>
+      <div class="field"><label>Description (what order)</label><input type="text" id="aiDesc" value="Studio editing"></div>
+      <div style="display:flex;gap:14px">
+        <div class="field" style="flex:1"><label>Quantity</label><input type="number" id="aiQty" value="1" min="1" oninput="updateAdminInvoicePreview()"></div>
+        <div class="field" style="flex:1"><label>Amount per unit (£)</label><input type="number" id="aiAmount" step="0.01" placeholder="0.00" oninput="updateAdminInvoicePreview()"></div>
+      </div>
+      <div class="field"><label>VAT / Tax (%) — optional</label><input type="number" id="aiTaxPct" step="0.01" value="0" min="0" oninput="updateAdminInvoicePreview()"></div>
+      <div class="field"><label>Invoice note (optional)</label><textarea id="aiNote" placeholder="e.g. payment terms, thank-you note…"></textarea></div>
       <div style="border-top:1px solid var(--line-soft);padding-top:14px">
         <div style="display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-mid);margin-bottom:6px"><span>Subtotal</span><span id="aiSubtotalPreview">£0.00</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-mid);margin-bottom:6px"><span>Tax</span><span id="aiTaxPreview">£0.00</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-mid);margin-bottom:6px"><span>VAT / Tax</span><span id="aiTaxPreview">£0.00</span></div>
         <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:700;color:var(--ink)"><span>Total</span><span id="aiTotalPreview">£0.00</span></div>
       </div>
     </div>
@@ -1269,9 +1287,10 @@ async function restoreSession(){
   }
 })();
 function setWelcome(name, desc, isAdmin){
+  document.getElementById('welcomeBanner').classList.toggle('hidden', !!isAdmin);
+  if(isAdmin) return;
   document.getElementById('welcomeName').textContent = 'Welcome, '+name;
   document.getElementById('welcomeDesc').textContent = desc;
-  document.getElementById('welcomeBanner').classList.toggle('admin-align', !!isAdmin);
 }
 function enterStudioView(studio){
   document.getElementById('cornerName').textContent = studio.name;
@@ -1477,10 +1496,26 @@ async function renderJobs(){
   const active = jobs.filter(j=>j.stage<5);
   const done = jobs.filter(j=>j.stage===5);
 
-  currentJobs = await Promise.all(active.map(async j=>({
-    name:j.name, ref:j.ref, files:await fileCountFor(j.id), spec:j.spec, turn:j.turnaround, stage:j.stage,
-    due: j.stage===0 ? 'Awaiting acceptance' : (j.due_date ? 'Due '+new Date(j.due_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : 'In progress')
-  })));
+  currentJobs = await Promise.all(active.map(async j=>{
+    let invView = null;
+    if(j.stage===4){
+      try{
+        const inv = await api(`/jobs/${j.id}/invoice`);
+        invView = {
+          inv: inv.invoice_number,
+          date: new Date(inv.issued_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),
+          note: inv.note || '',
+          lines: inv.lines.map(l=>[l.description, String(l.qty), '£'+Number(l.amount).toFixed(2)]),
+          total: '£'+Number(inv.total_amount).toFixed(2)
+        };
+      }catch(e){}
+    }
+    return {
+      name:j.name, ref:j.ref, files:await fileCountFor(j.id), spec:j.spec, turn:j.turnaround, stage:j.stage,
+      due: j.stage===0 ? 'Awaiting acceptance' : (j.due_date ? 'Due '+new Date(j.due_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}) : 'In progress'),
+      invView
+    };
+  }));
 
   completedJobs = await Promise.all(done.map(async j=>{
     const filesCount = await fileCountFor(j.id);
@@ -1489,7 +1524,7 @@ async function renderJobs(){
     return {
       name:j.name, ref:j.ref,
       date: inv.paid_at ? new Date(inv.paid_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—',
-      files: filesCount, spec:j.spec, inv: inv.invoice_number,
+      files: filesCount, spec:j.spec, inv: inv.invoice_number, note: inv.note || '', paid: true,
       lines: inv.lines.map(l=>[l.description, String(l.qty), '£'+Number(l.amount).toFixed(2)]),
       total: '£'+Number(inv.total_amount).toFixed(2)
     };
@@ -1502,7 +1537,7 @@ function renderJobLists(){
   const wrap = document.getElementById('currentJobs');
   wrap.innerHTML='';
   const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];
-  currentJobs.forEach(j=>{
+  currentJobs.forEach((j,i)=>{
     const stages = STAGES.map((s,i)=>{
       const cls = i < j.stage ? 'done' : (i===j.stage ? 'now' : '');
       return `<div class="stage ${cls}"><div class="conn"></div><div class="node"></div><div class="slabel">${s}</div></div>`;
@@ -1520,7 +1555,10 @@ function renderJobLists(){
       <div class="stage-rail">${stages}</div>
       <div class="job-foot">
         <span>Turnaround: <b>${j.turn}</b></span>
-        <span>${j.due}</span>
+        <span style="display:flex;align-items:center;gap:14px">
+          ${j.invView ? `<button class="files-btn" onclick="openInvoiceCurrent(${i})">View invoice</button>` : ''}
+          <span>${j.due}</span>
+        </span>
       </div>`;
     wrap.appendChild(card);
   });
@@ -1561,6 +1599,16 @@ function renderInvoiceTotals(lines, totalText){
     taxRow.classList.add('hidden');
   }
 }
+function setInvoiceNoteAndPaid(note, paid){
+  const noteBlock = document.getElementById('invNoteBlock');
+  if(note){
+    noteBlock.classList.remove('hidden');
+    document.getElementById('invNoteText').textContent = note;
+  }else{
+    noteBlock.classList.add('hidden');
+  }
+  document.getElementById('invPaidStamp').classList.toggle('hidden', !paid);
+}
 function openInvoice(i){
   const j = completedJobs[i];
   document.getElementById('invNumber').textContent = j.inv;
@@ -1573,6 +1621,24 @@ function openInvoice(i){
     lines.innerHTML += `<tr><td>${l[0]}<small>${j.name}</small></td><td>${l[1]}</td><td>${l[2]}</td></tr>`;
   });
   renderInvoiceTotals(lineObjs, j.total);
+  setInvoiceNoteAndPaid(j.note, true);
+  document.getElementById('invoiceOverlay').classList.remove('hidden');
+}
+function openInvoiceCurrent(i){
+  const j = currentJobs[i];
+  if(!j || !j.invView) return;
+  const inv = j.invView;
+  document.getElementById('invNumber').textContent = inv.inv;
+  document.getElementById('invDate').textContent = inv.date;
+  document.getElementById('invRef').textContent = j.ref + ' · ' + j.name;
+  const lines = document.getElementById('invLines');
+  lines.innerHTML='';
+  const lineObjs = inv.lines.map(l=>({description:l[0], qty:l[1], amount:l[2]}));
+  inv.lines.forEach(l=>{
+    lines.innerHTML += `<tr><td>${l[0]}<small>${j.name}</small></td><td>${l[1]}</td><td>${l[2]}</td></tr>`;
+  });
+  renderInvoiceTotals(lineObjs, inv.total);
+  setInvoiceNoteAndPaid(inv.note, false);
   document.getElementById('invoiceOverlay').classList.remove('hidden');
 }
 function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add('hidden'); }
@@ -1761,6 +1827,7 @@ function openAdminInvoiceView(jobId){
     lines.innerHTML += `<tr><td>${l.description}<small>${j.name}</small></td><td>${l.qty}</td><td>£${Number(l.amount).toFixed(2)}</td></tr>`;
   });
   renderInvoiceTotals(j.invoice.lines||[], '£'+Number(j.invoice.total_amount).toFixed(2));
+  setInvoiceNoteAndPaid(j.invoice.note, !!j.invoice.paid);
   document.getElementById('invoiceOverlay').classList.remove('hidden');
 }
 
@@ -1979,11 +2046,15 @@ function updateAdminInvoicePreview(){
 function openAdminInvoice(jobId){
   adminInvoiceJobId = jobId;
   const job = allAdminJobs.find(j=>j.id===jobId);
-  document.getElementById('aiJobMeta').textContent = job ? `${job.ref} · ${job.studio.name} · ${job.name}` : '—';
+  const seq = job ? job.ref.replace(/^LF-/,'') : '';
+  document.getElementById('aiInvNumber').textContent = job ? `ELY-${new Date().getFullYear()}-${seq}` : '—';
+  document.getElementById('aiBilledTo').textContent = job ? job.studio.name : '—';
+  document.getElementById('aiIssuedDate').textContent = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('aiDesc').value = job ? job.spec : 'Studio editing';
   document.getElementById('aiQty').value = job ? job.files_count || 1 : 1;
   document.getElementById('aiAmount').value = '';
   document.getElementById('aiTaxPct').value = 0;
+  document.getElementById('aiNote').value = '';
   updateAdminInvoicePreview();
   document.getElementById('adminInvoiceOverlay').classList.remove('hidden');
 }
@@ -1993,13 +2064,14 @@ async function submitAdminInvoice(){
   const qty = Number(document.getElementById('aiQty').value) || 1;
   const rate = Number(document.getElementById('aiAmount').value) || 0;
   const taxPct = Number(document.getElementById('aiTaxPct').value) || 0;
+  const note = document.getElementById('aiNote').value.trim();
   const subtotal = qty*rate;
   const tax = Math.round(subtotal*(taxPct/100)*100)/100;
   const lines = [{description, qty, amount: subtotal}];
   if(tax>0) lines.push({description:`Tax (${taxPct}%)`, qty:1, amount:tax});
   try{
     await api(`/jobs/${adminInvoiceJobId}/invoice`, {method:'POST', body:JSON.stringify({
-      lines, total_amount: subtotal+tax
+      lines, total_amount: subtotal+tax, note
     })});
     closeAdminInvoice();
     showToast('Invoice sent');

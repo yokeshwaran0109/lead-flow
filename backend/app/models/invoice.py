@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Numeric, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -16,6 +16,7 @@ class Invoice(Base):
     invoice_number: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     lines: Mapped[list] = mapped_column(JSONB, default=list)  # [{description, qty, amount}, ...]
     total_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
+    note: Mapped[str] = mapped_column(Text, default="")
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     paid: Mapped[bool] = mapped_column(Boolean, default=False)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

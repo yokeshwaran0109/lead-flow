@@ -13,6 +13,7 @@ class InvoiceLine(BaseModel):
 class InvoiceCreate(BaseModel):
     lines: list[InvoiceLine]
     total_amount: float
+    note: str = ""
 
 
 class InvoiceOut(BaseModel):
@@ -22,6 +23,7 @@ class InvoiceOut(BaseModel):
     invoice_number: str
     lines: list
     total_amount: float
+    note: str
     issued_at: datetime
     paid: bool
     paid_at: datetime | None

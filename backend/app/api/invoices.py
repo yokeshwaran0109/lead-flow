@@ -48,6 +48,7 @@ async def create_invoice(
         invoice_number=invoice_number,
         lines=[line.model_dump() for line in data.lines],
         total_amount=data.total_amount,
+        note=data.note,
     )
     job.stage = Stage.INVOICE_SENT.value
     db.add(invoice)
@@ -66,7 +67,8 @@ async def create_invoice(
                 f"Invoice {invoice.invoice_number}",
                 f"An invoice for {job.ref} ({job.name}) is ready.<br><br>"
                 f"Total: <b>£{invoice.total_amount}</b><br>"
-                f"Sign in to Lead Flow to view the full breakdown and payment status.",
+                + (f"Note: {invoice.note}<br><br>" if invoice.note else "")
+                + "Sign in to Lead Flow to view the full breakdown and payment status.",
             ),
         )
     return invoice
