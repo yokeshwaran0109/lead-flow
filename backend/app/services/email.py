@@ -141,12 +141,12 @@ def _email_shell(badge_html: str, eyebrow: str, heading: str, subtext: str, body
     """
 
 
-def render_verify_email(studio_name: str, confirm_url: str, expire_hours: int) -> str:
+def render_verify_email(studio_name: str, confirm_url: str, expire_minutes: int) -> str:
     body = (
         _p(f"Hi <b>{studio_name}</b>,")
         + _p(
             f"Thanks for signing up with Lead Flow. Click below to confirm your email and set up your "
-            f"account. This link expires in <b>{expire_hours} hours</b>."
+            f"account. This link expires in <b>{expire_minutes} minutes</b>."
         )
         + _cta(confirm_url, "Confirm my account &rarr;")
         + f'<p style="font-size:13px;color:#9d9890;margin-top:16px;{_FONT}">If you didn\'t create a Lead Flow account, you can safely ignore this email.</p>'

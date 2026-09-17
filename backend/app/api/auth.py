@@ -15,7 +15,7 @@ from app.services.email import render_verify_email, send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-CONFIRM_TOKEN_EXPIRE_HOURS = 24
+CONFIRM_TOKEN_EXPIRE_MINUTES = 10
 
 
 @router.post("/signup")
@@ -30,7 +30,7 @@ async def signup(data: StudioSignup, request: Request, db: AsyncSession = Depend
         password_hash=None,
         confirmed=False,
         confirm_token=confirm_token,
-        confirm_token_expires=datetime.now(timezone.utc) + timedelta(hours=CONFIRM_TOKEN_EXPIRE_HOURS),
+        confirm_token_expires=datetime.now(timezone.utc) + timedelta(minutes=CONFIRM_TOKEN_EXPIRE_MINUTES),
     )
     db.add(studio)
     await db.commit()
@@ -38,7 +38,7 @@ async def signup(data: StudioSignup, request: Request, db: AsyncSession = Depend
     send_email(
         studio.email,
         "Confirm your Lead Flow account",
-        render_verify_email(studio.name, confirm_url, CONFIRM_TOKEN_EXPIRE_HOURS),
+        render_verify_email(studio.name, confirm_url, CONFIRM_TOKEN_EXPIRE_MINUTES),
     )
     return {"detail": "Check your email to confirm your account."}
 
