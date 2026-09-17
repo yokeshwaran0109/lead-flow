@@ -5,9 +5,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr
 
 class StudioSignup(BaseModel):
     email: EmailStr
-    password: str
     name: str
-    location: str = ""
+
+
+class ConfirmIn(BaseModel):
+    token: str
+
+
+class SetPasswordIn(BaseModel):
+    password: str
 
 
 class StudioLogin(BaseModel):

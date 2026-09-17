@@ -481,7 +481,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
     <div class="login-card hidden" id="signUpCard">
       <div class="eyebrow">Studio sign up</div>
       <h2>Create your account</h2>
-      <div class="sub">Set up your studio to start sending shoots to Elyon.</div>
+      <div class="sub">We'll email you a confirmation link to get started.</div>
       <div class="field">
         <label>Studio name</label>
         <input type="text" id="signupName" autocomplete="organization">
@@ -490,17 +490,26 @@ table.jobs-table{width:100%;border-collapse:collapse}
         <label>Studio email</label>
         <input type="email" id="signupEmail" autocomplete="username">
       </div>
-      <div class="field">
-        <label>Location</label>
-        <input type="text" id="signupLocation" autocomplete="address-level2">
-      </div>
-      <div class="field">
-        <label>Password</label>
-        <input type="password" id="signupPass" autocomplete="new-password">
-      </div>
-      <button class="btn btn-gold" onclick="doSignup()">Create account</button>
+      <button class="btn btn-gold" onclick="doSignup()">Send confirmation link</button>
       <div class="auth-toggle">Already have an account? <button onclick="toggleAuthMode()">Sign in</button></div>
       <div class="login-foot">Powered by <b>Lead Flow</b> · Editing by <b>Elyon</b></div>
+    </div>
+    <div class="login-card hidden" id="checkEmailCard">
+      <div class="eyebrow">Almost there</div>
+      <h2>Check your email</h2>
+      <div class="sub">We've sent a confirmation link to <b id="checkEmailAddress"></b>. Open it in Gmail (or your inbox) to activate your account.</div>
+      <div class="auth-toggle"><button onclick="showAuthCard('signInCard')">Back to sign in</button></div>
+      <div class="login-foot">Powered by <b>Lead Flow</b> · Editing by <b>Elyon</b></div>
+    </div>
+    <div class="login-card hidden" id="setPasswordCard">
+      <div class="eyebrow">Email confirmed</div>
+      <h2>Set your password</h2>
+      <div class="sub">Choose a password so you can sign in next time.</div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="newPass" autocomplete="new-password">
+      </div>
+      <button class="btn btn-gold" onclick="doSetPassword()">Set password &amp; continue</button>
     </div>
   </div>
 </div>
@@ -816,19 +825,30 @@ async function doLogin(){
     showToast(err.message || 'Sign in failed');
   }
 }
+function showAuthCard(id){
+  ['signInCard','signUpCard','checkEmailCard','setPasswordCard'].forEach(cid=>{
+    document.getElementById(cid).classList.toggle('hidden', cid!==id);
+  });
+}
 function toggleAuthMode(){
-  document.getElementById('signInCard').classList.toggle('hidden');
-  document.getElementById('signUpCard').classList.toggle('hidden');
+  const signUpHidden = document.getElementById('signUpCard').classList.contains('hidden');
+  showAuthCard(signUpHidden ? 'signUpCard' : 'signInCard');
 }
 async function doSignup(){
   const name = document.getElementById('signupName').value.trim();
   const email = document.getElementById('signupEmail').value.trim();
-  const location = document.getElementById('signupLocation').value.trim();
-  const password = document.getElementById('signupPass').value;
   try{
-    const auth = await api('/auth/signup', {method:'POST', body:JSON.stringify({name,email,location,password})});
-    token = auth.access_token;
-    role = auth.role;
+    await api('/auth/signup', {method:'POST', body:JSON.stringify({name,email})});
+    document.getElementById('checkEmailAddress').textContent = email;
+    showAuthCard('checkEmailCard');
+  }catch(err){
+    showToast(err.message || 'Sign up failed');
+  }
+}
+async function doSetPassword(){
+  const password = document.getElementById('newPass').value;
+  try{
+    await api('/auth/set-password', {method:'POST', body:JSON.stringify({password})});
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appScreen').classList.remove('hidden');
     const studio = await api('/auth/me');
@@ -836,9 +856,24 @@ async function doSignup(){
     showToast('Welcome, '+studio.name);
     startPolling();
   }catch(err){
-    showToast(err.message || 'Sign up failed');
+    showToast(err.message || 'Could not set password');
   }
 }
+async function handleEmailConfirm(){
+  const params = new URLSearchParams(window.location.search);
+  const confirmToken = params.get('confirm');
+  if(!confirmToken) return;
+  window.history.replaceState({}, '', window.location.pathname);
+  try{
+    const auth = await api('/auth/confirm', {method:'POST', body:JSON.stringify({token:confirmToken})});
+    token = auth.access_token;
+    role = auth.role;
+    showAuthCard('setPasswordCard');
+  }catch(err){
+    showToast(err.message || 'Confirmation link is invalid or expired');
+  }
+}
+handleEmailConfirm();
 function enterStudioView(studio){
   document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = studio.name);
   document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = (studio.location ? studio.location+' · ' : '') + studio.plan);
