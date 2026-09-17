@@ -251,14 +251,33 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 .stat-tile:hover{border-color:var(--gold)}
 .stat-tile.active{border-color:var(--gold);background:var(--gold-dim)}
 .stat-tile.active .stat-value{color:var(--gold-bright)}
-.job-filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.job-filters input,.job-filters select{
+.job-toolbar{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px 20px;margin-bottom:24px;display:flex;flex-direction:column;gap:14px;
+}
+.job-toolbar-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.job-toolbar input,.job-toolbar select{
   background:var(--bg-raise);border:1px solid var(--line);border-radius:10px;
   padding:11px 14px;color:var(--ink);font-size:14px;font-family:'DM Sans',sans-serif;
+  transition:border-color .2s;
 }
-.job-filters input{flex:1;min-width:220px}
-.job-filters select{width:auto;min-width:170px;flex:0 0 auto}
-.job-filters input:focus,.job-filters select:focus{outline:none;border-color:var(--gold)}
+.job-toolbar input:focus,.job-toolbar select:focus{outline:none;border-color:var(--gold)}
+.job-toolbar input:hover,.job-toolbar select:hover{border-color:var(--ink-dim)}
+.search-wrap{position:relative;flex:1;min-width:240px}
+.search-wrap .search-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;stroke:var(--ink-dim);fill:none;stroke-width:2;pointer-events:none;
+}
+.search-wrap input{width:100%;padding-left:40px}
+.job-toolbar select{width:auto;min-width:170px;flex:0 0 auto}
+.job-toolbar-sort{
+  padding-top:14px;border-top:1px solid var(--line-soft);gap:10px;
+}
+.job-toolbar-sort .sort-label{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);
+  font-family:'Urbanist',sans-serif;font-weight:700;
+}
+.job-toolbar-sort select{min-width:160px}
 .stat-tile .stat-label{
   font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);
   font-family:'Urbanist',sans-serif;font-weight:700;margin-bottom:8px;
@@ -756,20 +775,39 @@ table.jobs-table{width:100%;border-collapse:collapse}
             <h1>Jobs</h1>
             <p>Every order placed, from the start until now. Advance stages, send invoices, and mark payments.</p>
           </div>
-          <div class="job-filters">
-            <input type="text" id="jobSearchRef" placeholder="Search by order number or job name…" oninput="applyAdminJobFilters()">
-            <select id="jobSearchStatus" onchange="applyAdminJobFilters()">
-              <option value="">All statuses</option>
-              <option value="0">Received</option>
-              <option value="1">In editing</option>
-              <option value="2">Quality check</option>
-              <option value="3">Delivered</option>
-              <option value="4">Invoice sent</option>
-              <option value="5">Invoice paid</option>
-            </select>
-            <select id="jobSearchService" onchange="applyAdminJobFilters()">
-              <option value="">All services</option>
-            </select>
+          <div class="job-toolbar">
+            <div class="job-toolbar-row">
+              <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input type="text" id="jobSearchRef" placeholder="Search by order number or job name…" oninput="applyAdminJobFilters()">
+              </div>
+              <select id="jobSearchStatus" onchange="applyAdminJobFilters()">
+                <option value="">All statuses</option>
+                <option value="0">Received</option>
+                <option value="1">In editing</option>
+                <option value="2">Quality check</option>
+                <option value="3">Delivered</option>
+                <option value="4">Invoice sent</option>
+                <option value="5">Invoice paid</option>
+              </select>
+              <select id="jobSearchService" onchange="applyAdminJobFilters()">
+                <option value="">All services</option>
+                <option value="Signature Boudoir — full retouch">Signature Boudoir — full retouch</option>
+                <option value="Colour &amp; tone only">Colour &amp; tone only</option>
+                <option value="Cull + colour + light retouch">Cull + colour + light retouch</option>
+                <option value="Fine art black &amp; white conversion">Fine art black &amp; white conversion</option>
+                <option value="Album-ready master edit">Album-ready master edit</option>
+              </select>
+            </div>
+            <div class="job-toolbar-row job-toolbar-sort">
+              <span class="sort-label">Sort by</span>
+              <select id="jobSortBy" onchange="applyAdminJobFilters()">
+                <option value="newest">Newest first</option>
+                <option value="oldest">Oldest first</option>
+                <option value="order">Order number</option>
+                <option value="status">Status</option>
+              </select>
+            </div>
           </div>
           <div id="adminJobs"></div>
         </div>
@@ -1370,15 +1408,6 @@ function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add
 let allAdminJobs = [];
 let adminStatFilter = 'total';
 
-function populateServiceFilter(jobs){
-  const select = document.getElementById('jobSearchService');
-  const current = select.value;
-  const services = Array.from(new Set(jobs.map(j=>j.spec))).sort();
-  select.innerHTML = '<option value="">All services</option>' +
-    services.map(s=>`<option value="${s}">${s}</option>`).join('');
-  if(services.includes(current)) select.value = current;
-}
-
 function setAdminStatFilter(filter){
   adminStatFilter = filter;
   ['statTileTotal','statTileProgress','statTileCompleted'].forEach(id=>{
@@ -1401,6 +1430,13 @@ function applyAdminJobFilters(){
   if(statusVal !== '') jobs = jobs.filter(j=>String(j.stage)===statusVal);
   const serviceVal = document.getElementById('jobSearchService').value;
   if(serviceVal !== '') jobs = jobs.filter(j=>j.spec===serviceVal);
+  const sortBy = document.getElementById('jobSortBy').value;
+  jobs = jobs.slice().sort((a,b)=>{
+    if(sortBy === 'oldest') return new Date(a.created_at) - new Date(b.created_at);
+    if(sortBy === 'order') return a.ref.localeCompare(b.ref, undefined, {numeric:true});
+    if(sortBy === 'status') return a.stage - b.stage;
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
   renderAdminJobs(jobs);
 }
 
@@ -1418,7 +1454,6 @@ async function renderAdmin(){
     document.getElementById('statCompleted').textContent = jobs.filter(j=>j.stage===5).length;
     renderAdminStudios(studios);
     allAdminJobs = jobs;
-    populateServiceFilter(jobs);
     applyAdminJobFilters();
     await renderAdminCompletedJobs(jobs.filter(j=>j.stage===5));
   }catch(err){
