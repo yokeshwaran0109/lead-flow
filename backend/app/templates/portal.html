@@ -200,6 +200,10 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 
 .welcome-banner{max-width:1180px;margin:0 auto;padding:32px 40px 0}
+.welcome-banner.admin-align{max-width:none;margin:0;padding-left:290px}
+@media (max-width:820px){
+  .welcome-banner.admin-align{padding-left:40px}
+}
 .welcome-name{font-family:'Urbanist',sans-serif;font-size:22px;font-weight:800}
 .welcome-desc{color:var(--ink-mid);font-size:14px;margin-top:4px}
 
@@ -1009,10 +1013,16 @@ table.jobs-table{width:100%;border-collapse:collapse}
         </select>
       </div>
       <div class="field"><label>Notes</label><textarea id="noNotes" placeholder="Internal notes for this order…"></textarea></div>
+      <div class="field">
+        <label>Session files</label>
+        <button type="button" class="btn btn-ghost" style="width:100%" onclick="document.getElementById('noFileInput').click()">Choose files</button>
+        <input type="file" id="noFileInput" multiple accept="image/*" style="display:none" onchange="handleNewOrderFiles(this.files)">
+        <div class="filelist" id="noFileList"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeNewOrderModal()">Cancel</button>
-      <button class="btn btn-gold" onclick="submitNewOrder()">Create order</button>
+      <button class="btn btn-gold" id="noSubmitBtn" onclick="submitNewOrder()">Create order</button>
     </div>
   </div>
 </div>
@@ -1119,7 +1129,7 @@ async function doLogin(){
       document.getElementById('tabUpload').classList.add('hidden');
       document.getElementById('tabJobs').classList.add('hidden');
       document.getElementById('tabAdmin').classList.remove('hidden');
-      setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.");
+      setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.", true);
       switchTab('admin');
       showToast('Signed in as '+admin.name);
     }else{
@@ -1210,7 +1220,7 @@ async function restoreSession(){
       document.getElementById('tabUpload').classList.add('hidden');
       document.getElementById('tabJobs').classList.add('hidden');
       document.getElementById('tabAdmin').classList.remove('hidden');
-      setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.");
+      setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.", true);
       switchTab('admin');
     }else{
       const studio = await api('/auth/me');
@@ -1239,9 +1249,10 @@ async function restoreSession(){
     await restoreSession();
   }
 })();
-function setWelcome(name, desc){
+function setWelcome(name, desc, isAdmin){
   document.getElementById('welcomeName').textContent = 'Welcome, '+name;
   document.getElementById('welcomeDesc').textContent = desc;
+  document.getElementById('welcomeBanner').classList.toggle('admin-align', !!isAdmin);
 }
 function enterStudioView(studio){
   document.getElementById('cornerName').textContent = studio.name;
@@ -1312,7 +1323,7 @@ async function exitImpersonation(){
   document.getElementById('tabUpload').classList.add('hidden');
   document.getElementById('tabJobs').classList.add('hidden');
   document.getElementById('tabAdmin').classList.remove('hidden');
-  setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.");
+  setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.", true);
   switchTab('admin');
   showToast('Back to admin view');
 }
@@ -1721,15 +1732,39 @@ async function loadAdminAnalytics(){
 }
 
 /* ================= NEW ORDER (admin) ================= */
+let noFiles = [];
 function openNewOrderModal(){
   const sel = document.getElementById('noStudio');
   sel.innerHTML = allAdminStudios.map(s=>`<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No studios yet</option>';
   document.getElementById('noName').value = '';
   document.getElementById('noTurnaround').value = 'Standard · 72h';
   document.getElementById('noNotes').value = '';
+  noFiles = [];
+  renderNewOrderFiles();
   document.getElementById('newOrderOverlay').classList.remove('hidden');
 }
 function closeNewOrderModal(){ document.getElementById('newOrderOverlay').classList.add('hidden'); }
+function handleNewOrderFiles(list){
+  for(const f of list){ noFiles.push(f); }
+  renderNewOrderFiles();
+}
+function removeNewOrderFile(i){ noFiles.splice(i,1); renderNewOrderFiles(); }
+function renderNewOrderFiles(){
+  const wrap = document.getElementById('noFileList');
+  wrap.innerHTML = '';
+  noFiles.forEach((f,i)=>{
+    const row = document.createElement('div');
+    row.className='file-row';
+    row.innerHTML = `
+      <div class="thumb">${f.type && f.type.startsWith('image/') ? '' : 'RAW'}</div>
+      <div class="fmeta">
+        <div class="fname">${f.name}</div>
+        <div class="fsize">${(f.size/1048576).toFixed(1)} MB</div>
+      </div>
+      <button class="fx" onclick="removeNewOrderFile(${i})">×</button>`;
+    wrap.appendChild(row);
+  });
+}
 async function submitNewOrder(){
   const studio_id = document.getElementById('noStudio').value;
   if(!studio_id){ showToast('No studio to assign this order to'); return; }
@@ -1737,13 +1772,28 @@ async function submitNewOrder(){
   const spec = document.getElementById('noSpec').value;
   const turnaround = document.getElementById('noTurnaround').value;
   const notes = document.getElementById('noNotes').value.trim();
+  const submittedFiles = noFiles;
+  const submitBtn = document.getElementById('noSubmitBtn');
+  submitBtn.disabled = true;
   try{
     const job = await api('/admin/jobs', {method:'POST', body:JSON.stringify({studio_id, name, spec, turnaround, notes})});
+    if(submittedFiles.length){
+      const presigned = await api(`/admin/jobs/${job.id}/files/presign`, {method:'POST', body:JSON.stringify({
+        files: submittedFiles.map(f=>({filename:f.name, content_type:f.type||'application/octet-stream', size_bytes:f.size}))
+      })});
+      await Promise.all(presigned.map(async (p,i)=>{
+        const f = submittedFiles[i];
+        await fetch(p.upload_url, {method:'PUT', headers:{'Content-Type': f.type||'application/octet-stream'}, body:f});
+        await api(`/admin/jobs/${job.id}/files/${p.file_id}/complete`, {method:'POST'});
+      }));
+    }
     closeNewOrderModal();
     showToast(`Order ${job.ref} created for ${job.studio.name}`);
     renderAdmin();
   }catch(err){
     showToast(err.message || 'Could not create order');
+  }finally{
+    submitBtn.disabled = false;
   }
 }
 

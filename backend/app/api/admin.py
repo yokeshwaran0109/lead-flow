@@ -23,7 +23,8 @@ from app.schemas.admin import (
     ImpersonateOut,
     StudioSummary,
 )
-from app.services.b2_storage import generate_presigned_get_url
+from app.schemas.file import FileOut, FilePresignRequestBatch, FilePresignResponse
+from app.services.b2_storage import generate_presigned_get_url, generate_presigned_put_url
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -103,6 +104,53 @@ async def create_job_for_studio(
     db.add(job)
     await db.commit()
     return await db.get(Job, job.id, options=JOB_LOAD_OPTIONS)
+
+
+@router.post("/jobs/{job_id}/files/presign", response_model=list[FilePresignResponse])
+async def admin_presign_files(
+    job_id: uuid.UUID,
+    data: FilePresignRequestBatch,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    job = await db.get(Job, job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    responses = []
+    for f in data.files:
+        file_id = uuid.uuid4()
+        storage_key = f"studios/{job.studio_id}/jobs/{job.id}/{file_id}-{f.filename}"
+        job_file = JobFile(
+            id=file_id,
+            job_id=job.id,
+            filename=f.filename,
+            content_type=f.content_type,
+            size_bytes=f.size_bytes,
+            storage_key=storage_key,
+        )
+        db.add(job_file)
+        upload_url = generate_presigned_put_url(storage_key, f.content_type)
+        responses.append(
+            FilePresignResponse(file_id=file_id, upload_url=upload_url, storage_key=storage_key)
+        )
+    await db.commit()
+    return responses
+
+
+@router.post("/jobs/{job_id}/files/{file_id}/complete", response_model=FileOut)
+async def admin_complete_upload(
+    job_id: uuid.UUID,
+    file_id: uuid.UUID,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    file = await db.get(JobFile, file_id)
+    if not file or file.job_id != job_id:
+        raise HTTPException(status_code=404, detail="File not found")
+    file.uploaded = True
+    await db.commit()
+    await db.refresh(file)
+    return file
 
 
 @router.get("/analytics", response_model=AnalyticsOut)
