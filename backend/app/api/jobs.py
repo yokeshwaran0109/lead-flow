@@ -31,6 +31,18 @@ async def create_job(
     db.add(job)
     await db.commit()
     await db.refresh(job)
+
+    admins = await db.scalars(select(Admin))
+    for admin in admins:
+        send_email(
+            admin.email,
+            f"New job from {studio.name}: {job.ref}",
+            f"<p><b>{studio.name}</b> submitted a new job.</p>"
+            f"<p>Job: {job.name} ({job.ref})<br>"
+            f"Spec: {job.spec}<br>"
+            f"Turnaround: {job.turnaround}</p>"
+            f"<p>Notes: {job.notes or '—'}</p>",
+        )
     return job
 
 
