@@ -1996,8 +1996,19 @@ function renderAdminJobs(jobs, containerId){
 }
 
 async function adminSetStage(jobId, stage){
+  const stageNum = Number(stage);
+  if(stageNum===4){
+    showToast('Use "Send invoice" to move a job to Invoice Sent');
+    renderAdmin();
+    return;
+  }
+  if(stageNum===5){
+    showToast('Use "Mark paid" to move a job to Invoice Paid');
+    renderAdmin();
+    return;
+  }
   try{
-    await api(`/jobs/${jobId}/stage`, {method:'PATCH', body:JSON.stringify({stage:Number(stage)})});
+    await api(`/jobs/${jobId}/stage`, {method:'PATCH', body:JSON.stringify({stage:stageNum})});
     showToast('Stage updated');
     renderAdmin();
   }catch(err){
