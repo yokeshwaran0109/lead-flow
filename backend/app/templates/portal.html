@@ -269,10 +269,55 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
   font-family:'Urbanist',sans-serif;font-weight:700;margin-bottom:8px;
 }
 .stat-tile .stat-value{font-family:'Urbanist',sans-serif;font-size:32px;font-weight:800;color:var(--ink)}
+.nav-section{margin-bottom:20px}
+.nav-label{
+  font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-dim);padding:0 16px;margin-bottom:6px;font-family:'Urbanist',sans-serif;
+}
+.page-head-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:34px}
+.page-head-row .page-head{margin-bottom:0}
+.clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.client-card{
+  background:var(--bg-card);border:1px solid var(--line-soft);
+  border-radius:var(--radius);padding:22px 24px;transition:border-color .2s;
+}
+.client-card:hover{border-color:var(--line)}
+.client-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.client-avatar{
+  width:40px;height:40px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--gold),#8a3407);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Urbanist',sans-serif;font-weight:700;font-size:13px;color:#14110e;
+}
+.client-name{font-size:15px;font-weight:700;font-family:'Urbanist',sans-serif}
+.client-email{font-size:12px;color:var(--ink-dim);margin-top:2px}
+.client-plan{
+  margin-left:auto;display:inline-block;background:var(--gold-dim);border:1px solid rgba(232,84,11,.2);
+  color:var(--gold-bright);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 10px;border-radius:100px;font-family:'Urbanist',sans-serif;white-space:nowrap;
+}
+.client-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.client-stat{background:var(--bg-raise);border-radius:9px;padding:10px 12px;text-align:center}
+.client-stat .cv{font-size:17px;font-weight:700;font-family:'Urbanist',sans-serif;line-height:1}
+.client-stat .cl{font-size:9.5px;color:var(--ink-dim);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:'Urbanist',sans-serif;margin-top:4px}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.chart-card{background:var(--bg-card);border:1px solid var(--line-soft);border-radius:var(--radius);padding:24px}
+.chart-card h4{font-size:13px;font-weight:700;margin-bottom:18px;font-family:'Urbanist',sans-serif;letter-spacing:.04em}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:140px}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
+.bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.bar{width:100%;border-radius:6px 6px 0 0;background:var(--gold-dim);border:1px solid rgba(232,84,11,.25)}
+.bar.hi{background:var(--gold);border-color:var(--gold)}
+.bar-label{font-size:10.5px;color:var(--ink-dim);font-family:'Urbanist',sans-serif;font-weight:600}
+.donut-legend{display:flex;flex-direction:column;gap:10px;justify-content:center}
+.legend-item{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.legend-val{font-weight:700;color:var(--ink);margin-left:auto;min-width:36px;text-align:right}
 @media (max-width:820px){
   .admin-sidebar{position:static;width:100%;flex-direction:row;height:auto;overflow-x:auto}
   .admin-content{margin-left:0}
   .admin-stats{grid-template-columns:1fr}
+  .analytics-grid{grid-template-columns:1fr}
 }
 
 .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
@@ -723,39 +768,47 @@ table.jobs-table{width:100%;border-collapse:collapse}
     <!-- ======== ADMIN VIEW ======== -->
     <div id="viewAdmin" class="hidden admin-shell">
       <div class="admin-sidebar">
-        <button class="admin-nav-item active" id="navDashboard" onclick="switchAdminSection('dashboard')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5M3.75 3h16.5M21.75 3h-1.5m0 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3.75m8.5-3.75l1 3.75m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
-          <span>Dashboard</span>
-        </button>
-        <button class="admin-nav-item" id="navClients" onclick="switchAdminSection('clients')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-          <span>Clients</span>
-        </button>
+        <div class="nav-section">
+          <div class="nav-label">Overview</div>
+          <button class="admin-nav-item active" id="navDashboard" onclick="switchAdminSection('dashboard')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5M3.75 3h16.5M21.75 3h-1.5m0 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3.75m8.5-3.75l1 3.75m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="admin-nav-item" id="navOrders" onclick="switchAdminSection('orders')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+            <span>All Orders</span>
+          </button>
+          <button class="admin-nav-item" id="navClients" onclick="switchAdminSection('clients')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+            <span>Clients</span>
+          </button>
+        </div>
+        <div class="nav-section">
+          <div class="nav-label">Finance</div>
+          <button class="admin-nav-item" id="navInvoices" onclick="switchAdminSection('invoices')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"/></svg>
+            <span>Invoices</span>
+          </button>
+          <button class="admin-nav-item" id="navAnalytics" onclick="switchAdminSection('analytics')">
+            <svg class="nav-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg>
+            <span>Analytics</span>
+          </button>
+        </div>
       </div>
       <div class="admin-content">
-        <div class="admin-stats">
-          <div class="stat-tile active" id="statTileTotal" onclick="setAdminStatFilter('total')"><div class="stat-label">Total orders</div><div class="stat-value" id="statTotal">0</div></div>
-          <div class="stat-tile" id="statTileProgress" onclick="setAdminStatFilter('progress')"><div class="stat-label">In progress</div><div class="stat-value" id="statProgress">0</div></div>
-          <div class="stat-tile" id="statTileCompleted" onclick="setAdminStatFilter('completed')"><div class="stat-label">Completed</div><div class="stat-value" id="statCompleted">0</div></div>
-        </div>
-        <div id="adminSectionClients" class="hidden">
-          <div class="page-head">
-            <div class="eyebrow">Admin control</div>
-            <h1>Clients</h1>
-            <p>Every studio using Lead Flow.</p>
-          </div>
-          <div class="card" style="padding:8px 4px">
-            <table class="jobs-table">
-              <thead><tr><th>Client</th><th>Email</th><th>Plan</th><th>Joining date</th></tr></thead>
-              <tbody id="adminStudios"></tbody>
-            </table>
-          </div>
-        </div>
         <div id="adminSectionDashboard">
-          <div class="page-head">
-            <div class="eyebrow">Admin control</div>
-            <h1>Dashboard</h1>
-            <p>Every order placed, from the start until now. Advance stages, send invoices, and mark payments.</p>
+          <div class="page-head-row">
+            <div class="page-head">
+              <div class="eyebrow">Admin control</div>
+              <h1>Dashboard</h1>
+              <p>Every order placed, from the start until now. Advance stages, send invoices, and mark payments.</p>
+            </div>
+            <button class="btn btn-gold" style="padding:11px 20px;font-size:13.5px;white-space:nowrap" onclick="openNewOrderModal()">+ New Order</button>
+          </div>
+          <div class="admin-stats">
+            <div class="stat-tile active" id="statTileTotal" onclick="setAdminStatFilter('total')"><div class="stat-label">Total orders</div><div class="stat-value" id="statTotal">0</div></div>
+            <div class="stat-tile" id="statTileProgress" onclick="setAdminStatFilter('progress')"><div class="stat-label">In progress</div><div class="stat-value" id="statProgress">0</div></div>
+            <div class="stat-tile" id="statTileCompleted" onclick="setAdminStatFilter('completed')"><div class="stat-label">Completed</div><div class="stat-value" id="statCompleted">0</div></div>
           </div>
           <div class="job-toolbar">
             <div class="job-toolbar-row">
@@ -790,6 +843,82 @@ table.jobs-table{width:100%;border-collapse:collapse}
           </div>
           <div id="adminJobs"></div>
         </div>
+
+        <div id="adminSectionOrders" class="hidden">
+          <div class="page-head-row">
+            <div class="page-head">
+              <div class="eyebrow">Order management</div>
+              <h1>All Orders</h1>
+              <p>Every order across every studio, unfiltered.</p>
+            </div>
+            <button class="btn btn-gold" style="padding:11px 20px;font-size:13.5px;white-space:nowrap" onclick="openNewOrderModal()">+ New Order</button>
+          </div>
+          <div class="job-toolbar">
+            <div class="job-toolbar-row">
+              <div class="search-wrap">
+                <svg class="search-icon" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+                <input type="text" id="ordersSearch" placeholder="Search orders…" oninput="applyOrdersFilter()">
+              </div>
+              <select id="ordersStatusFilter" onchange="applyOrdersFilter()">
+                <option value="">All statuses</option>
+                <option value="0">Received</option>
+                <option value="1">In editing</option>
+                <option value="2">Quality check</option>
+                <option value="3">Delivered</option>
+                <option value="4">Invoice sent</option>
+                <option value="5">Invoice paid</option>
+              </select>
+            </div>
+          </div>
+          <div id="adminOrdersList"></div>
+        </div>
+
+        <div id="adminSectionClients" class="hidden">
+          <div class="page-head">
+            <div class="eyebrow">Admin control</div>
+            <h1>Clients</h1>
+            <p>Every studio using Lead Flow.</p>
+          </div>
+          <div class="clients-grid" id="clientsGrid"></div>
+        </div>
+
+        <div id="adminSectionInvoices" class="hidden">
+          <div class="page-head">
+            <div class="eyebrow">Finance</div>
+            <h1>Invoices</h1>
+            <p>Every invoice sent or paid, across all client studios.</p>
+          </div>
+          <div class="card" style="padding:8px 4px">
+            <table class="jobs-table">
+              <thead><tr><th>Job</th><th>Client</th><th>Invoice #</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+              <tbody id="adminInvoicesTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="adminSectionAnalytics" class="hidden">
+          <div class="page-head">
+            <div class="eyebrow">Reporting</div>
+            <h1>Analytics</h1>
+            <p>Revenue trends and order volume across all studios.</p>
+          </div>
+          <div class="admin-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px">
+            <div class="stat-tile"><div class="stat-label">Revenue this month</div><div class="stat-value" id="anRevenueMonth">£0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Avg order value</div><div class="stat-value" id="anAvgOrder">£0.00</div></div>
+            <div class="stat-tile"><div class="stat-label">Files edited</div><div class="stat-value" id="anFilesEdited">0</div></div>
+            <div class="stat-tile"><div class="stat-label">Avg turnaround</div><div class="stat-value" id="anAvgTurnaround">—</div></div>
+          </div>
+          <div class="analytics-grid">
+            <div class="chart-card">
+              <h4>Monthly Revenue (£)</h4>
+              <div class="bar-chart" id="anBarChart"></div>
+            </div>
+            <div class="chart-card">
+              <h4>Orders by Service Type</h4>
+              <div class="donut-legend" id="anServiceBreakdown"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -815,7 +944,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
       <div class="inv-meta">
         <div>
           <div class="lbl">Billed to</div>
-          <div>Light &amp; Lace Studios<br><span style="color:var(--ink-dim)">Barnsley, South Yorkshire, UK</span></div>
+          <div id="invBilledTo">Light &amp; Lace Studios<br><span style="color:var(--ink-dim)">Barnsley, South Yorkshire, UK</span></div>
         </div>
         <div>
           <div class="lbl">Details</div>
@@ -850,6 +979,40 @@ table.jobs-table{width:100%;border-collapse:collapse}
       <h3>Job sent to Elyon</h3>
       <p id="sentSummary">Your files are on their way. Track progress any time in the <b>Jobs</b> tab.</p>
       <button class="btn btn-gold" onclick="closeSent();switchTab('jobs')">View in Jobs</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ADMIN: NEW ORDER MODAL ============ -->
+<div class="overlay hidden" id="newOrderOverlay" onclick="if(event.target===this)closeNewOrderModal()">
+  <div class="modal">
+    <div class="modal-pad">
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:18px">Create new order</h3>
+      <div class="field"><label>Client studio</label><select id="noStudio"></select></div>
+      <div class="field"><label>Job name</label><input type="text" id="noName" placeholder="e.g. Boudoir — Mrs H, 21 Aug"></div>
+      <div class="field">
+        <label>Edit specification</label>
+        <select id="noSpec">
+          <option>Signature Boudoir — full retouch</option>
+          <option>Colour &amp; tone only</option>
+          <option>Cull + colour + light retouch</option>
+          <option>Fine art black &amp; white conversion</option>
+          <option>Album-ready master edit</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Turnaround</label>
+        <select id="noTurnaround">
+          <option>Standard · 72h</option>
+          <option>Priority · 48h</option>
+          <option>Rush · 24h</option>
+        </select>
+      </div>
+      <div class="field"><label>Notes</label><textarea id="noNotes" placeholder="Internal notes for this order…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeNewOrderModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="submitNewOrder()">Create order</button>
     </div>
   </div>
 </div>
@@ -1167,13 +1330,18 @@ function switchTab(t){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+const ADMIN_SECTIONS = ['dashboard','orders','clients','invoices','analytics'];
 function switchAdminSection(section){
-  const map = {clients:'navClients', dashboard:'navDashboard'};
-  Object.keys(map).forEach(key=>{
-    document.getElementById(map[key]).classList.toggle('active', key===section);
+  ADMIN_SECTIONS.forEach(key=>{
+    const navId = 'nav'+key.charAt(0).toUpperCase()+key.slice(1);
+    document.getElementById(navId).classList.toggle('active', key===section);
+    const sectionId = 'adminSection'+key.charAt(0).toUpperCase()+key.slice(1);
+    document.getElementById(sectionId).classList.toggle('hidden', key!==section);
   });
-  document.getElementById('adminSectionClients').classList.toggle('hidden', section!=='clients');
-  document.getElementById('adminSectionDashboard').classList.toggle('hidden', section!=='dashboard');
+  if(section==='orders') applyOrdersFilter();
+  if(section==='clients') renderAdminClients();
+  if(section==='invoices') renderAdminInvoices();
+  if(section==='analytics') loadAdminAnalytics();
 }
 
 /* ================= UPLOAD ================= */
@@ -1421,6 +1589,8 @@ function applyAdminJobFilters(){
   renderAdminJobs(jobs);
 }
 
+let allAdminStudios = [];
+
 async function renderAdmin(){
   try{
     const [studios, jobs] = await Promise.all([api('/admin/studios'), api('/admin/jobs')]);
@@ -1433,27 +1603,152 @@ async function renderAdmin(){
     document.getElementById('statTotal').textContent = jobs.length;
     document.getElementById('statProgress').textContent = jobs.filter(j=>j.stage<3).length;
     document.getElementById('statCompleted').textContent = jobs.filter(j=>j.stage===5).length;
-    renderAdminStudios(studios);
+    allAdminStudios = studios;
     allAdminJobs = jobs;
     applyAdminJobFilters();
+    applyOrdersFilter();
+    renderAdminClients();
+    renderAdminInvoices();
   }catch(err){
     showToast(err.message || 'Could not load admin data');
   }
 }
 
-function renderAdminStudios(studios){
-  const tbody = document.getElementById('adminStudios');
+function applyOrdersFilter(){
+  const wrap = document.getElementById('adminOrdersList');
+  if(!wrap) return;
+  const q = (document.getElementById('ordersSearch').value||'').trim().toLowerCase();
+  const st = document.getElementById('ordersStatusFilter').value;
+  const jobs = allAdminJobs.filter(j=>{
+    const matchQ = !q || j.ref.toLowerCase().includes(q) || j.name.toLowerCase().includes(q) || j.studio.name.toLowerCase().includes(q);
+    const matchSt = st==='' || String(j.stage)===st;
+    return matchQ && matchSt;
+  });
+  renderAdminJobs(jobs, 'adminOrdersList');
+}
+
+function renderAdminClients(){
+  const grid = document.getElementById('clientsGrid');
+  if(!grid) return;
+  grid.innerHTML='';
+  if(!allAdminStudios.length){ grid.innerHTML = '<div class="card">No clients yet.</div>'; return; }
+  allAdminStudios.forEach(s=>{
+    const initials = s.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const card = document.createElement('div');
+    card.className = 'client-card';
+    card.innerHTML = `
+      <div class="client-head">
+        <div class="client-avatar">${initials}</div>
+        <div>
+          <div class="client-name">${s.name}</div>
+          <div class="client-email">${s.email}</div>
+        </div>
+        <div class="client-plan">${s.plan}</div>
+      </div>
+      <div class="client-stats">
+        <div class="client-stat"><div class="cv">${s.orders_count}</div><div class="cl">Orders</div></div>
+        <div class="client-stat"><div class="cv">${s.files_total}</div><div class="cl">Files</div></div>
+        <div class="client-stat"><div class="cv" style="font-size:13px">£${Number(s.revenue).toFixed(2)}</div><div class="cl">Revenue</div></div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function renderAdminInvoices(){
+  const tbody = document.getElementById('adminInvoicesTable');
+  if(!tbody) return;
   tbody.innerHTML='';
-  studios.forEach(s=>{
+  const invoiced = allAdminJobs.filter(j=>j.invoice);
+  if(!invoiced.length){ tbody.innerHTML = '<tr><td colspan="7" style="color:var(--ink-dim)">No invoices yet.</td></tr>'; return; }
+  invoiced.forEach(j=>{
     const tr = document.createElement('tr');
-    const joined = s.created_at ? new Date(s.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.plan}</td><td>${joined}</td>`;
+    const date = new Date(j.invoice.issued_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    tr.innerHTML = `
+      <td class="jt-name">${j.name}<div class="jt-sub">${j.ref}</div></td>
+      <td>${j.studio.name}</td>
+      <td>${j.invoice.invoice_number}</td>
+      <td>${date}</td>
+      <td>£${Number(j.invoice.total_amount).toFixed(2)}</td>
+      <td><span class="badge ${j.invoice.paid?'b-invpaid':'b-invsent'}"><span class="badge-dot"></span>${j.invoice.paid?'Paid':'Sent'}</span></td>
+      <td><button class="inv-btn" onclick="openAdminInvoiceView('${j.id}')">View</button></td>`;
     tbody.appendChild(tr);
   });
 }
 
-function renderAdminJobs(jobs){
-  const wrap = document.getElementById('adminJobs');
+function openAdminInvoiceView(jobId){
+  const j = allAdminJobs.find(x=>x.id===jobId);
+  if(!j || !j.invoice) return;
+  document.getElementById('invNumber').textContent = j.invoice.invoice_number;
+  document.getElementById('invDate').textContent = new Date(j.invoice.issued_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  document.getElementById('invRef').textContent = j.ref + ' · ' + j.name;
+  document.getElementById('invBilledTo').innerHTML = `${j.studio.name}<br><span style="color:var(--ink-dim)">${j.studio.email}</span>`;
+  const lines = document.getElementById('invLines');
+  lines.innerHTML='';
+  (j.invoice.lines||[]).forEach(l=>{
+    lines.innerHTML += `<tr><td>${l.description}<small>${j.name}</small></td><td>${l.qty}</td><td>£${Number(l.amount).toFixed(2)}</td></tr>`;
+  });
+  const total = '£'+Number(j.invoice.total_amount).toFixed(2);
+  document.getElementById('invSub').textContent = total;
+  document.getElementById('invTotal').textContent = total;
+  document.getElementById('invoiceOverlay').classList.remove('hidden');
+}
+
+async function loadAdminAnalytics(){
+  try{
+    const a = await api('/admin/analytics');
+    document.getElementById('anRevenueMonth').textContent = '£'+a.revenue_this_month.toFixed(2);
+    document.getElementById('anAvgOrder').textContent = '£'+a.avg_order_value.toFixed(2);
+    document.getElementById('anFilesEdited').textContent = a.files_edited;
+    document.getElementById('anAvgTurnaround').textContent = a.avg_turnaround_hours ? Math.round(a.avg_turnaround_hours)+'h' : '—';
+
+    const maxRev = Math.max(1, ...a.monthly_revenue.map(m=>m.total));
+    const barChart = document.getElementById('anBarChart');
+    barChart.innerHTML = a.monthly_revenue.map((m,i)=>{
+      const pct = Math.round((m.total/maxRev)*100);
+      const label = new Date(m.month+'-02').toLocaleDateString('en-GB',{month:'short'});
+      const hi = i===a.monthly_revenue.length-1 ? ' hi' : '';
+      return `<div class="bar-group"><div class="bar-wrap"><div class="bar${hi}" style="height:${Math.max(pct,3)}%"></div></div><div class="bar-label">${label}</div></div>`;
+    }).join('');
+
+    const colors = ['var(--gold)','var(--green)','#7a9abf','#d0a878','var(--red)'];
+    const breakdown = document.getElementById('anServiceBreakdown');
+    breakdown.innerHTML = a.service_breakdown.length
+      ? a.service_breakdown.map((s,i)=>`<div class="legend-item"><div class="legend-dot" style="background:${colors[i%colors.length]}"></div> ${s.spec} <span class="legend-val">${s.percent}%</span></div>`).join('')
+      : '<div style="color:var(--ink-dim);font-size:13px">No orders yet.</div>';
+  }catch(err){
+    showToast(err.message || 'Could not load analytics');
+  }
+}
+
+/* ================= NEW ORDER (admin) ================= */
+function openNewOrderModal(){
+  const sel = document.getElementById('noStudio');
+  sel.innerHTML = allAdminStudios.map(s=>`<option value="${s.id}">${s.name}</option>`).join('') || '<option value="">No studios yet</option>';
+  document.getElementById('noName').value = '';
+  document.getElementById('noTurnaround').value = 'Standard · 72h';
+  document.getElementById('noNotes').value = '';
+  document.getElementById('newOrderOverlay').classList.remove('hidden');
+}
+function closeNewOrderModal(){ document.getElementById('newOrderOverlay').classList.add('hidden'); }
+async function submitNewOrder(){
+  const studio_id = document.getElementById('noStudio').value;
+  if(!studio_id){ showToast('No studio to assign this order to'); return; }
+  const name = document.getElementById('noName').value.trim() || 'Untitled shoot';
+  const spec = document.getElementById('noSpec').value;
+  const turnaround = document.getElementById('noTurnaround').value;
+  const notes = document.getElementById('noNotes').value.trim();
+  try{
+    const job = await api('/admin/jobs', {method:'POST', body:JSON.stringify({studio_id, name, spec, turnaround, notes})});
+    closeNewOrderModal();
+    showToast(`Order ${job.ref} created for ${job.studio.name}`);
+    renderAdmin();
+  }catch(err){
+    showToast(err.message || 'Could not create order');
+  }
+}
+
+function renderAdminJobs(jobs, containerId){
+  const wrap = document.getElementById(containerId || 'adminJobs');
   wrap.innerHTML='';
   if(!jobs.length){ wrap.innerHTML = '<div class="card">No jobs yet.</div>'; return; }
   const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];

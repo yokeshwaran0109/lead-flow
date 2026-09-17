@@ -45,3 +45,7 @@ class Job(Base):
     @property
     def ref(self) -> str:
         return f"LF-{self.seq}"
+
+    @property
+    def files_count(self) -> int:
+        return len(self.files)
