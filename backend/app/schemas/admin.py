@@ -3,6 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.auth import Token
 from app.schemas.file import FileOut
 from app.schemas.invoice import InvoiceOut
 from app.schemas.job import JobOut
@@ -34,3 +35,8 @@ class AdminJobOut(JobOut):
 class AdminJobDetail(AdminJobOut):
     files: list[FileOut]
     invoice: InvoiceOut | None
+
+
+class ImpersonateOut(Token):
+    studio_id: uuid.UUID
+    studio_name: str

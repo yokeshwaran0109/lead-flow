@@ -184,6 +184,18 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 .profile-menu-item:hover{background:var(--gold-dim);color:var(--gold-bright)}
 
+.impersonate-bar{
+  background:var(--gold-dim);border-bottom:1px solid var(--gold);color:var(--gold-bright);
+  font-size:13px;font-weight:600;padding:10px 40px;display:flex;align-items:center;gap:10px;
+  justify-content:center;
+}
+.impersonate-bar b{color:var(--ink)}
+.impersonate-exit{
+  background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold-bright);
+  font-size:12px;font-weight:600;padding:5px 12px;margin-left:10px;
+}
+.impersonate-exit:hover{background:var(--gold);color:#14110e}
+
 .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
 .page-head{margin-bottom:34px}
 .page-head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:8px}
@@ -493,6 +505,11 @@ table.jobs-table{width:100%;border-collapse:collapse}
     </div>
   </div>
 
+  <div class="impersonate-bar hidden" id="impersonateBar">
+    Acting as <b id="impersonateName">—</b> on behalf of this studio
+    <button class="impersonate-exit" onclick="exitImpersonation()">Exit to admin view</button>
+  </div>
+
   <div class="main">
 
     <!-- ======== UPLOAD VIEW ======== -->
@@ -590,7 +607,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
       <div class="section-label"><h2>Studios</h2><div class="rule"></div></div>
       <div class="card" style="padding:8px 4px;margin-bottom:34px">
         <table class="jobs-table">
-          <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th></tr></thead>
+          <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th><th></th></tr></thead>
           <tbody id="adminStudios"></tbody>
         </table>
       </div>
@@ -747,24 +764,57 @@ async function doLogin(){
       showToast('Signed in as '+admin.name);
     }else{
       const studio = await api('/auth/me');
-      document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = studio.name);
-      document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = (studio.location ? studio.location+' · ' : '') + studio.plan);
-      document.querySelector('.avatar').textContent = studio.name.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
-      document.getElementById('tabUpload').classList.remove('hidden');
-      document.getElementById('tabJobs').classList.remove('hidden');
-      document.getElementById('tabAdmin').classList.add('hidden');
-      switchTab('upload');
+      enterStudioView(studio);
       showToast('Signed in as '+studio.name);
     }
   }catch(err){
     showToast(err.message || 'Sign in failed');
   }
 }
+function enterStudioView(studio){
+  document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = studio.name);
+  document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = (studio.location ? studio.location+' · ' : '') + studio.plan);
+  document.querySelector('.avatar').textContent = studio.name.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  document.getElementById('tabUpload').classList.remove('hidden');
+  document.getElementById('tabJobs').classList.remove('hidden');
+  document.getElementById('tabAdmin').classList.add('hidden');
+  switchTab('upload');
+}
 function doLogout(){
   token = null;
   role = null;
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
+}
+let savedAdminToken = null;
+async function impersonateStudio(studioId, studioName){
+  try{
+    const res = await api(`/admin/studios/${studioId}/impersonate`, {method:'POST'});
+    savedAdminToken = token;
+    token = res.access_token;
+    role = 'studio';
+    enterStudioView({name: res.studio_name, location:'', plan:'Acting on behalf'});
+    document.getElementById('impersonateBar').classList.remove('hidden');
+    document.getElementById('impersonateName').textContent = res.studio_name;
+    showToast('Acting as '+res.studio_name);
+  }catch(err){
+    showToast(err.message || 'Could not act as studio');
+  }
+}
+async function exitImpersonation(){
+  token = savedAdminToken;
+  savedAdminToken = null;
+  role = 'admin';
+  document.getElementById('impersonateBar').classList.add('hidden');
+  const admin = await api('/admin/me');
+  document.querySelectorAll('.studio-chip .name').forEach(el=>el.textContent = admin.name);
+  document.querySelectorAll('.studio-chip .plan').forEach(el=>el.textContent = 'Admin · Full access');
+  document.querySelector('.avatar').textContent = 'AD';
+  document.getElementById('tabUpload').classList.add('hidden');
+  document.getElementById('tabJobs').classList.add('hidden');
+  document.getElementById('tabAdmin').classList.remove('hidden');
+  switchTab('admin');
+  showToast('Back to admin view');
 }
 function toggleProfileMenu(e){
   e.stopPropagation();
@@ -987,7 +1037,7 @@ function renderAdminStudios(studios){
   tbody.innerHTML='';
   studios.forEach(s=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.location||'—'}</td><td>${s.plan}</td>`;
+    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.location||'—'}</td><td>${s.plan}</td><td><button class="inv-btn" onclick="impersonateStudio('${s.id}','${s.name}')">Act as studio</button></td>`;
     tbody.appendChild(tr);
   });
 }

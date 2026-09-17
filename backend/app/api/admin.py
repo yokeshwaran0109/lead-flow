@@ -7,11 +7,12 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_admin
 from app.core.database import get_db
+from app.core.security import create_access_token
 from app.models.admin import Admin
 from app.models.file import JobFile
 from app.models.job import Job
 from app.models.studio import Studio
-from app.schemas.admin import AdminJobDetail, AdminJobOut, AdminOut, StudioSummary
+from app.schemas.admin import AdminJobDetail, AdminJobOut, AdminOut, ImpersonateOut, StudioSummary
 from app.services.b2_storage import generate_presigned_get_url
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -56,6 +57,21 @@ async def get_job_detail(
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     return job
+
+
+@router.post("/studios/{studio_id}/impersonate", response_model=ImpersonateOut)
+async def impersonate_studio(
+    studio_id: uuid.UUID,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    studio = await db.get(Studio, studio_id)
+    if not studio:
+        raise HTTPException(status_code=404, detail="Studio not found")
+    token = create_access_token(subject=str(studio.id), role="studio", impersonated_by=str(admin.id))
+    return ImpersonateOut(
+        access_token=token, role="studio", studio_id=studio.id, studio_name=studio.name
+    )
 
 
 @router.get("/jobs/{job_id}/files/{file_id}/download")
