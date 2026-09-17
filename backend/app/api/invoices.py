@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_current_admin, get_current_studio
+from app.api.deps import get_current_studio, require_admin
 from app.core.database import get_db
 from app.models.invoice import Invoice
 from app.models.job import Job, Stage
@@ -29,7 +29,7 @@ async def get_invoice(
     return job.invoice
 
 
-@router.post("", response_model=InvoiceOut, dependencies=[Depends(get_current_admin)])
+@router.post("", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
 async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSession = Depends(get_db)):
     job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job:
@@ -61,7 +61,7 @@ async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSessio
     return invoice
 
 
-@router.post("/pay", response_model=InvoiceOut, dependencies=[Depends(get_current_admin)])
+@router.post("/pay", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
 async def mark_paid(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job or not job.invoice:
