@@ -1,4 +1,6 @@
+import re
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
@@ -15,6 +17,13 @@ from app.services.email import send_email
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 
+def _due_date_from_turnaround(turnaround: str) -> datetime | None:
+    match = re.search(r"(\d+)\s*hours?", turnaround, re.IGNORECASE)
+    if not match:
+        return None
+    return datetime.now(timezone.utc) + timedelta(hours=int(match.group(1)))
+
+
 @router.post("", response_model=JobOut)
 async def create_job(
     data: JobCreate,
@@ -27,6 +36,7 @@ async def create_job(
         spec=data.spec,
         turnaround=data.turnaround,
         notes=data.notes,
+        due_date=_due_date_from_turnaround(data.turnaround),
     )
     db.add(job)
     await db.commit()
