@@ -199,6 +199,24 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 .impersonate-exit:hover{background:var(--gold);color:#14110e}
 
+.admin-shell{display:flex;gap:40px;align-items:flex-start}
+.admin-sidebar{
+  flex-shrink:0;width:190px;display:flex;flex-direction:column;gap:4px;
+  position:sticky;top:100px;
+}
+.admin-nav-item{
+  text-align:left;background:none;border:none;color:var(--ink-mid);
+  font-size:14px;font-weight:600;padding:11px 16px;border-radius:9px;
+  font-family:'Urbanist',sans-serif;letter-spacing:.02em;transition:all .2s;
+}
+.admin-nav-item:hover{color:var(--ink);background:var(--bg-raise)}
+.admin-nav-item.active{color:var(--gold-bright);background:var(--gold-dim)}
+.admin-content{flex:1;min-width:0}
+@media (max-width:820px){
+  .admin-shell{flex-direction:column}
+  .admin-sidebar{width:100%;flex-direction:row;position:static;overflow-x:auto}
+}
+
 .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
 .page-head{margin-bottom:34px}
 .page-head h1{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:8px}
@@ -634,32 +652,49 @@ table.jobs-table{width:100%;border-collapse:collapse}
     </div>
 
     <!-- ======== ADMIN VIEW ======== -->
-    <div id="viewAdmin" class="hidden">
-      <div class="page-head">
-        <div class="eyebrow">Admin control</div>
-        <h1>All studio jobs</h1>
-        <p>Full visibility across every studio. Advance stages, send invoices, and mark payments.</p>
+    <div id="viewAdmin" class="hidden admin-shell">
+      <div class="admin-sidebar">
+        <button class="admin-nav-item active" id="navStudios" onclick="switchAdminSection('studios')">Studios</button>
+        <button class="admin-nav-item" id="navJobs" onclick="switchAdminSection('jobs')">Jobs</button>
+        <button class="admin-nav-item" id="navCompleted" onclick="switchAdminSection('completed')">Completed jobs</button>
       </div>
-
-      <div class="section-label"><h2>Studios</h2><div class="rule"></div></div>
-      <div class="card" style="padding:8px 4px;margin-bottom:34px">
-        <table class="jobs-table">
-          <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th><th></th></tr></thead>
-          <tbody id="adminStudios"></tbody>
-        </table>
-      </div>
-
-      <div class="section-label"><h2>Jobs</h2><div class="rule"></div></div>
-      <div id="adminJobs"></div>
-
-      <div class="section-label" style="margin-top:34px"><h2>Completed jobs</h2><div class="rule"></div></div>
-      <div class="card" style="padding:8px 4px">
-        <table class="jobs-table">
-          <thead>
-            <tr><th>Job</th><th>Delivered</th><th>Files</th><th>Spec</th><th>Invoice</th></tr>
-          </thead>
-          <tbody id="adminCompletedJobs"></tbody>
-        </table>
+      <div class="admin-content">
+        <div id="adminSectionStudios">
+          <div class="page-head">
+            <div class="eyebrow">Admin control</div>
+            <h1>Studios</h1>
+            <p>Every studio using Lead Flow.</p>
+          </div>
+          <div class="card" style="padding:8px 4px">
+            <table class="jobs-table">
+              <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th><th></th></tr></thead>
+              <tbody id="adminStudios"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="adminSectionJobs" class="hidden">
+          <div class="page-head">
+            <div class="eyebrow">Admin control</div>
+            <h1>Jobs</h1>
+            <p>Full visibility across every studio. Advance stages, send invoices, and mark payments.</p>
+          </div>
+          <div id="adminJobs"></div>
+        </div>
+        <div id="adminSectionCompleted" class="hidden">
+          <div class="page-head">
+            <div class="eyebrow">Admin control</div>
+            <h1>Completed jobs</h1>
+            <p>Delivered and paid jobs, across every studio.</p>
+          </div>
+          <div class="card" style="padding:8px 4px">
+            <table class="jobs-table">
+              <thead>
+                <tr><th>Job</th><th>Delivered</th><th>Files</th><th>Spec</th><th>Invoice</th></tr>
+              </thead>
+              <tbody id="adminCompletedJobs"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -960,6 +995,16 @@ function switchTab(t){
   if(t==='jobs') renderJobs();
   if(t==='admin') renderAdmin();
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function switchAdminSection(section){
+  const map = {studios:'navStudios', jobs:'navJobs', completed:'navCompleted'};
+  Object.keys(map).forEach(key=>{
+    document.getElementById(map[key]).classList.toggle('active', key===section);
+  });
+  document.getElementById('adminSectionStudios').classList.toggle('hidden', section!=='studios');
+  document.getElementById('adminSectionJobs').classList.toggle('hidden', section!=='jobs');
+  document.getElementById('adminSectionCompleted').classList.toggle('hidden', section!=='completed');
 }
 
 /* ================= UPLOAD ================= */
