@@ -208,10 +208,18 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 .impersonate-exit:hover{background:var(--gold);color:#14110e}
 
-.admin-shell{display:flex;gap:40px;align-items:flex-start}
+.admin-shell{
+  display:block;width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);
+}
 .admin-sidebar{
-  flex-shrink:0;width:190px;display:flex;flex-direction:column;gap:4px;
-  position:sticky;top:100px;
+  position:fixed;left:0;top:70px;bottom:0;width:210px;
+  display:flex;flex-direction:column;gap:4px;
+  background:var(--bg-card);border-right:1px solid var(--line-soft);
+  padding:26px 14px;overflow-y:auto;z-index:40;
+}
+.admin-sidebar-label{
+  font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-dim);
+  font-family:'Urbanist',sans-serif;font-weight:700;padding:0 16px;margin-bottom:10px;
 }
 .admin-nav-item{
   text-align:left;background:none;border:none;color:var(--ink-mid);
@@ -220,10 +228,21 @@ button{font-family:'DM Sans',sans-serif;cursor:pointer}
 }
 .admin-nav-item:hover{color:var(--ink);background:var(--bg-raise)}
 .admin-nav-item.active{color:var(--gold-bright);background:var(--gold-dim)}
-.admin-content{flex:1;min-width:0}
+.admin-content{margin-left:250px;padding:0 40px 90px;max-width:1180px}
+.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:34px}
+.stat-tile{
+  background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;
+}
+.stat-tile .stat-label{
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);
+  font-family:'Urbanist',sans-serif;font-weight:700;margin-bottom:8px;
+}
+.stat-tile .stat-value{font-family:'Urbanist',sans-serif;font-size:32px;font-weight:800;color:var(--ink)}
 @media (max-width:820px){
-  .admin-shell{flex-direction:column}
-  .admin-sidebar{width:100%;flex-direction:row;position:static;overflow-x:auto}
+  .admin-sidebar{position:static;width:100%;flex-direction:row;height:auto;overflow-x:auto}
+  .admin-content{margin-left:0}
+  .admin-stats{grid-template-columns:1fr}
 }
 
 .main{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:44px 40px 90px}
@@ -673,11 +692,17 @@ table.jobs-table{width:100%;border-collapse:collapse}
     <!-- ======== ADMIN VIEW ======== -->
     <div id="viewAdmin" class="hidden admin-shell">
       <div class="admin-sidebar">
+        <div class="admin-sidebar-label">Dashboard</div>
         <button class="admin-nav-item active" id="navStudios" onclick="switchAdminSection('studios')">Studios</button>
         <button class="admin-nav-item" id="navJobs" onclick="switchAdminSection('jobs')">Jobs</button>
         <button class="admin-nav-item" id="navCompleted" onclick="switchAdminSection('completed')">Completed jobs</button>
       </div>
       <div class="admin-content">
+        <div class="admin-stats">
+          <div class="stat-tile"><div class="stat-label">Total orders</div><div class="stat-value" id="statTotal">0</div></div>
+          <div class="stat-tile"><div class="stat-label">In progress</div><div class="stat-value" id="statProgress">0</div></div>
+          <div class="stat-tile"><div class="stat-label">Completed</div><div class="stat-value" id="statCompleted">0</div></div>
+        </div>
         <div id="adminSectionStudios">
           <div class="page-head">
             <div class="eyebrow">Admin control</div>
@@ -1232,6 +1257,9 @@ async function renderAdmin(){
       });
     }
     knownAdminJobIds = new Set(jobs.map(j=>j.id));
+    document.getElementById('statTotal').textContent = jobs.length;
+    document.getElementById('statProgress').textContent = jobs.filter(j=>j.stage<3).length;
+    document.getElementById('statCompleted').textContent = jobs.filter(j=>j.stage===5).length;
     renderAdminStudios(studios);
     renderAdminJobs(jobs.filter(j=>j.stage<5));
     await renderAdminCompletedJobs(jobs.filter(j=>j.stage===5));
