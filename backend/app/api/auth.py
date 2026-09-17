@@ -11,7 +11,7 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.models.admin import Admin
 from app.models.studio import Studio
 from app.schemas.auth import ConfirmIn, SetPasswordIn, StudioLogin, StudioOut, StudioSignup, Token
-from app.services.email import render_email, send_email
+from app.services.email import render_verify_email, send_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -38,13 +38,7 @@ async def signup(data: StudioSignup, request: Request, db: AsyncSession = Depend
     send_email(
         studio.email,
         "Confirm your Lead Flow account",
-        render_email(
-            f"Welcome, {studio.name}",
-            f"Click below to confirm your email and get started. This link expires in "
-            f"{CONFIRM_TOKEN_EXPIRE_HOURS} hours.",
-            cta_url=confirm_url,
-            cta_label="Confirm my account",
-        ),
+        render_verify_email(studio.name, confirm_url, CONFIRM_TOKEN_EXPIRE_HOURS),
     )
     return {"detail": "Check your email to confirm your account."}
 

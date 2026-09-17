@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,7 +10,7 @@ from app.models.admin import Admin
 from app.models.job import Job
 from app.models.studio import Studio
 from app.schemas.job import JobCreate, JobOut, StageUpdate
-from app.services.email import render_email, send_email
+from app.services.email import render_email, render_status_email, send_email
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -76,6 +76,7 @@ async def get_job(
 async def update_stage(
     job_id: uuid.UUID,
     data: StageUpdate,
+    request: Request,
     admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -88,12 +89,13 @@ async def update_stage(
     studio = await db.get(Studio, job.studio_id)
     if studio:
         stage_label = data.stage.name.replace("_", " ").title()
+        portal_url = str(request.base_url).rstrip("/")
         send_email(
             studio.email,
             f"{job.ref} moved to {stage_label}",
-            render_email(
-                f"{job.ref} updated",
-                f"Your job <b>{job.name}</b> ({job.ref}) is now: <b>{stage_label}</b>.",
+            render_status_email(
+                studio.name, job.name, job.ref, job.spec, job.turnaround,
+                stage_label, data.stage.value, portal_url,
             ),
         )
     return job

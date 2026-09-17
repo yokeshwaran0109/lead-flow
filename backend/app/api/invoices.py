@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -13,7 +13,7 @@ from app.models.invoice import Invoice
 from app.models.job import Job, Stage
 from app.models.studio import Studio
 from app.schemas.invoice import InvoiceCreate, InvoiceOut
-from app.services.email import render_email, send_email
+from app.services.email import render_invoice_closed_email, render_invoice_email, send_email
 
 router = APIRouter(prefix="/jobs/{job_id}/invoice", tags=["invoices"])
 
@@ -34,6 +34,7 @@ async def get_invoice(
 async def create_invoice(
     job_id: uuid.UUID,
     data: InvoiceCreate,
+    request: Request,
     admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -60,15 +61,14 @@ async def create_invoice(
     await db.refresh(invoice)
     studio = await db.get(Studio, job.studio_id)
     if studio:
+        portal_url = str(request.base_url).rstrip("/")
+        issued_date = invoice.issued_at.strftime("%d %b %Y")
         send_email(
             studio.email,
             f"Invoice {invoice.invoice_number} for {job.ref}",
-            render_email(
-                f"Invoice {invoice.invoice_number}",
-                f"An invoice for {job.ref} ({job.name}) is ready.<br><br>"
-                f"Total: <b>£{invoice.total_amount}</b><br>"
-                + (f"Note: {invoice.note}<br><br>" if invoice.note else "")
-                + "Sign in to Lead Flow to view the full breakdown and payment status.",
+            render_invoice_email(
+                studio.name, job.name, job.ref, invoice.invoice_number, issued_date,
+                invoice.lines, float(invoice.total_amount), invoice.note, portal_url,
             ),
         )
     return invoice
@@ -77,6 +77,7 @@ async def create_invoice(
 @router.post("/pay", response_model=InvoiceOut)
 async def mark_paid(
     job_id: uuid.UUID,
+    request: Request,
     admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -90,12 +91,14 @@ async def mark_paid(
     await db.refresh(job.invoice)
     studio = await db.get(Studio, job.studio_id)
     if studio:
+        portal_url = str(request.base_url).rstrip("/")
+        paid_date = job.invoice.paid_at.strftime("%d %b %Y")
         send_email(
             studio.email,
             f"Payment received for {job.ref}",
-            render_email(
-                "Payment received",
-                f"Thanks — we've received payment for {job.ref} ({job.name}).",
+            render_invoice_closed_email(
+                studio.name, job.name, job.ref, job.invoice.invoice_number,
+                float(job.invoice.total_amount), paid_date, portal_url,
             ),
         )
     return job.invoice
