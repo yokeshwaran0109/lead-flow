@@ -1221,9 +1221,18 @@ async function restoreSession(){
   if(!savedToken || !savedRole) return;
   token = savedToken;
   role = savedRole;
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('appScreen').classList.remove('hidden');
+  if(role === 'admin'){
+    document.getElementById('tabUpload').classList.add('hidden');
+    document.getElementById('tabJobs').classList.add('hidden');
+    document.getElementById('tabAdmin').classList.remove('hidden');
+    document.getElementById('cornerProfile').classList.remove('top-right');
+  }else{
+    document.getElementById('cornerProfile').classList.add('top-right');
+  }
+  switchTab(role === 'admin' ? 'admin' : 'upload');
   try{
-    document.getElementById('loginScreen').classList.add('hidden');
-    document.getElementById('appScreen').classList.remove('hidden');
     let savedAdmin = null;
     try{ savedAdmin = localStorage.getItem('lf_saved_admin_token'); }catch(e){}
     if(role === 'admin'){
@@ -1231,12 +1240,7 @@ async function restoreSession(){
       document.getElementById('cornerName').textContent = admin.name;
       document.getElementById('cornerPlan').textContent = 'Admin · Full access';
       document.getElementById('cornerAvatar').textContent = 'AD';
-      document.getElementById('cornerProfile').classList.remove('top-right');
-      document.getElementById('tabUpload').classList.add('hidden');
-      document.getElementById('tabJobs').classList.add('hidden');
-      document.getElementById('tabAdmin').classList.remove('hidden');
       setWelcome(admin.name, "Oversee every studio's jobs, invoices, and deliveries from one dashboard.", true);
-      switchTab('admin');
     }else{
       const studio = await api('/auth/me');
       enterStudioView(studio);
