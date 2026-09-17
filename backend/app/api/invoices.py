@@ -6,8 +6,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.deps import get_current_studio, require_admin
+from app.api.deps import get_current_admin, get_current_studio
 from app.core.database import get_db
+from app.models.admin import Admin
 from app.models.invoice import Invoice
 from app.models.job import Job, Stage
 from app.models.studio import Studio
@@ -29,8 +30,13 @@ async def get_invoice(
     return job.invoice
 
 
-@router.post("", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
-async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSession = Depends(get_db)):
+@router.post("", response_model=InvoiceOut)
+async def create_invoice(
+    job_id: uuid.UUID,
+    data: InvoiceCreate,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
     job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -61,8 +67,12 @@ async def create_invoice(job_id: uuid.UUID, data: InvoiceCreate, db: AsyncSessio
     return invoice
 
 
-@router.post("/pay", response_model=InvoiceOut, dependencies=[Depends(require_admin)])
-async def mark_paid(job_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+@router.post("/pay", response_model=InvoiceOut)
+async def mark_paid(
+    job_id: uuid.UUID,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
     job = await db.get(Job, job_id, options=[selectinload(Job.invoice)])
     if not job or not job.invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")

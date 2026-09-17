@@ -18,6 +18,7 @@ class StudioLogin(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: str = "studio"
 
 
 class StudioOut(BaseModel):

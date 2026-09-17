@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_studio
 from app.core.database import get_db
 from app.core.security import create_access_token, hash_password, verify_password
+from app.models.admin import Admin
 from app.models.studio import Studio
 from app.schemas.auth import StudioLogin, StudioOut, StudioSignup, Token
 from app.services.email import send_email
@@ -27,17 +28,23 @@ async def signup(data: StudioSignup, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(studio)
     send_email(studio.email, "Welcome to Lead Flow", f"<p>Hi {studio.name}, your account is ready.</p>")
-    token = create_access_token(str(studio.id))
-    return Token(access_token=token)
+    token = create_access_token(str(studio.id), role="studio")
+    return Token(access_token=token, role="studio")
 
 
 @router.post("/login", response_model=Token)
 async def login(data: StudioLogin, db: AsyncSession = Depends(get_db)):
     studio = await db.scalar(select(Studio).where(Studio.email == data.email))
-    if not studio or not verify_password(data.password, studio.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token(str(studio.id))
-    return Token(access_token=token)
+    if studio and verify_password(data.password, studio.password_hash):
+        token = create_access_token(str(studio.id), role="studio")
+        return Token(access_token=token, role="studio")
+
+    admin = await db.scalar(select(Admin).where(Admin.email == data.email))
+    if admin and verify_password(data.password, admin.password_hash):
+        token = create_access_token(str(admin.id), role="admin")
+        return Token(access_token=token, role="admin")
+
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 
 @router.get("/me", response_model=StudioOut)

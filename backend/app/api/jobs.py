@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_studio, require_admin
+from app.api.deps import get_current_admin, get_current_studio
 from app.core.database import get_db
+from app.models.admin import Admin
 from app.models.job import Job
 from app.models.studio import Studio
 from app.schemas.job import JobCreate, JobOut, StageUpdate
@@ -56,8 +57,13 @@ async def get_job(
     return job
 
 
-@router.patch("/{job_id}/stage", response_model=JobOut, dependencies=[Depends(require_admin)])
-async def update_stage(job_id: uuid.UUID, data: StageUpdate, db: AsyncSession = Depends(get_db)):
+@router.patch("/{job_id}/stage", response_model=JobOut)
+async def update_stage(
+    job_id: uuid.UUID,
+    data: StageUpdate,
+    admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
     job = await db.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")

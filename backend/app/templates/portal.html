@@ -447,6 +447,7 @@ table.jobs-table{width:100%;border-collapse:collapse}
     <div class="tabs">
       <button class="tab active" id="tabUpload" onclick="switchTab('upload')">New Job</button>
       <button class="tab" id="tabJobs" onclick="switchTab('jobs')">Jobs <span class="count">3</span></button>
+      <button class="tab hidden" id="tabAdmin" onclick="switchTab('admin')">Admin</button>
     </div>
     <div class="studio-chip">
       <div class="meta">
@@ -544,6 +545,26 @@ table.jobs-table{width:100%;border-collapse:collapse}
       </div>
     </div>
 
+    <!-- ======== ADMIN VIEW ======== -->
+    <div id="viewAdmin" class="hidden">
+      <div class="page-head">
+        <div class="eyebrow">Admin control</div>
+        <h1>All studio jobs</h1>
+        <p>Full visibility across every studio. Advance stages, send invoices, and mark payments.</p>
+      </div>
+
+      <div class="section-label"><h2>Studios</h2><div class="rule"></div></div>
+      <div class="card" style="padding:8px 4px;margin-bottom:34px">
+        <table class="jobs-table">
+          <thead><tr><th>Studio</th><th>Email</th><th>Location</th><th>Plan</th></tr></thead>
+          <tbody id="adminStudios"></tbody>
+        </table>
+      </div>
+
+      <div class="section-label"><h2>Jobs</h2><div class="rule"></div></div>
+      <div id="adminJobs"></div>
+    </div>
+
   </div>
 
   <div class="footer-note">Visual demo only — no data is transmitted. <b>Lead Flow</b> Studio Editing Portal · Editing services by <b>Elyon</b></div>
@@ -605,12 +626,29 @@ table.jobs-table{width:100%;border-collapse:collapse}
   </div>
 </div>
 
+<!-- ============ ADMIN: CREATE INVOICE MODAL ============ -->
+<div class="overlay hidden" id="adminInvoiceOverlay" onclick="if(event.target===this)closeAdminInvoice()">
+  <div class="modal">
+    <div class="modal-pad">
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:18px">Create &amp; send invoice</h3>
+      <div class="field"><label>Line description</label><input type="text" id="aiDesc" value="Studio editing"></div>
+      <div class="field"><label>Qty</label><input type="number" id="aiQty" value="1" min="1"></div>
+      <div class="field"><label>Amount per unit (£)</label><input type="number" id="aiAmount" step="0.01" placeholder="0.00"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeAdminInvoice()">Cancel</button>
+      <button class="btn btn-gold" onclick="submitAdminInvoice()">Send invoice</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"><div class="tdot"></div><span id="toastMsg"></span></div>
 
 <script>
 /* ================= CONFIG / STATE ================= */
 const API_BASE = '';
 let token = null;
+let role = null;
 let files = [];
 
 const STAGES = ['Received','In editing','Quality check','Delivered','Invoice sent','Invoice paid'];
@@ -640,20 +678,37 @@ async function doLogin(){
   try{
     const auth = await api('/auth/login', {method:'POST', body:JSON.stringify({email,password})});
     token = auth.access_token;
-    const studio = await api('/auth/me');
-    document.querySelector('.studio-chip .name').textContent = studio.name;
-    document.querySelector('.studio-chip .plan').textContent = (studio.location ? studio.location+' · ' : '') + studio.plan;
-    document.querySelector('.avatar').textContent = studio.name.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    role = auth.role;
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appScreen').classList.remove('hidden');
-    await renderJobs();
-    showToast('Signed in as '+studio.name);
+    if(role === 'admin'){
+      const admin = await api('/admin/me');
+      document.querySelector('.studio-chip .name').textContent = admin.name;
+      document.querySelector('.studio-chip .plan').textContent = 'Admin · Full access';
+      document.querySelector('.avatar').textContent = 'AD';
+      document.getElementById('tabUpload').classList.add('hidden');
+      document.getElementById('tabJobs').classList.add('hidden');
+      document.getElementById('tabAdmin').classList.remove('hidden');
+      switchTab('admin');
+      showToast('Signed in as '+admin.name);
+    }else{
+      const studio = await api('/auth/me');
+      document.querySelector('.studio-chip .name').textContent = studio.name;
+      document.querySelector('.studio-chip .plan').textContent = (studio.location ? studio.location+' · ' : '') + studio.plan;
+      document.querySelector('.avatar').textContent = studio.name.split(' ').filter(w=>/^[A-Za-z]/.test(w)).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+      document.getElementById('tabUpload').classList.remove('hidden');
+      document.getElementById('tabJobs').classList.remove('hidden');
+      document.getElementById('tabAdmin').classList.add('hidden');
+      switchTab('upload');
+      showToast('Signed in as '+studio.name);
+    }
   }catch(err){
     showToast(err.message || 'Sign in failed');
   }
 }
 function doLogout(){
   token = null;
+  role = null;
   document.getElementById('appScreen').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
 }
@@ -662,9 +717,12 @@ function doLogout(){
 function switchTab(t){
   document.getElementById('tabUpload').classList.toggle('active', t==='upload');
   document.getElementById('tabJobs').classList.toggle('active', t==='jobs');
+  document.getElementById('tabAdmin').classList.toggle('active', t==='admin');
   document.getElementById('viewUpload').classList.toggle('hidden', t!=='upload');
   document.getElementById('viewJobs').classList.toggle('hidden', t!=='jobs');
+  document.getElementById('viewAdmin').classList.toggle('hidden', t!=='admin');
   if(t==='jobs') renderJobs();
+  if(t==='admin') renderAdmin();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
@@ -850,6 +908,103 @@ function openInvoice(i){
   document.getElementById('invoiceOverlay').classList.remove('hidden');
 }
 function closeInvoice(){ document.getElementById('invoiceOverlay').classList.add('hidden'); }
+
+/* ================= ADMIN ================= */
+async function renderAdmin(){
+  try{
+    const [studios, jobs] = await Promise.all([api('/admin/studios'), api('/admin/jobs')]);
+    renderAdminStudios(studios);
+    renderAdminJobs(jobs);
+  }catch(err){
+    showToast(err.message || 'Could not load admin data');
+  }
+}
+
+function renderAdminStudios(studios){
+  const tbody = document.getElementById('adminStudios');
+  tbody.innerHTML='';
+  studios.forEach(s=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td class="jt-name">${s.name}</td><td>${s.email}</td><td>${s.location||'—'}</td><td>${s.plan}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderAdminJobs(jobs){
+  const wrap = document.getElementById('adminJobs');
+  wrap.innerHTML='';
+  if(!jobs.length){ wrap.innerHTML = '<div class="card">No jobs yet.</div>'; return; }
+  const badgeMap = ['b-received','b-editing','b-qc','b-delivered','b-invsent','b-invpaid'];
+  jobs.forEach(j=>{
+    const stageOptions = STAGES.map((s,i)=>`<option value="${i}" ${i===j.stage?'selected':''}>${s}</option>`).join('');
+    let actionHtml = `<select style="width:auto;padding:9px 12px" onchange="adminSetStage('${j.id}', this.value)">${stageOptions}</select>`;
+    if(j.stage===3){
+      actionHtml += ` <button class="inv-btn" onclick="openAdminInvoice('${j.id}')">Send invoice</button>`;
+    }else if(j.stage===4){
+      actionHtml += ` <button class="inv-btn" onclick="adminMarkPaid('${j.id}')">Mark paid</button>`;
+    }
+    const card = document.createElement('div');
+    card.className='job-card';
+    card.innerHTML = `
+      <div class="job-top">
+        <div>
+          <h3>${j.name}</h3>
+          <div class="job-ref">Ref <b>${j.ref}</b> · ${j.studio.name} · ${j.spec}</div>
+        </div>
+        <span class="badge ${badgeMap[j.stage]}"><span class="badge-dot"></span>${STAGES[j.stage]}</span>
+      </div>
+      <div class="job-foot" style="margin-top:18px">
+        <span>Turnaround: <b>${j.turnaround}</b></span>
+        <span style="display:flex;align-items:center;gap:10px">${actionHtml}</span>
+      </div>`;
+    wrap.appendChild(card);
+  });
+}
+
+async function adminSetStage(jobId, stage){
+  try{
+    await api(`/jobs/${jobId}/stage`, {method:'PATCH', body:JSON.stringify({stage:Number(stage)})});
+    showToast('Stage updated');
+    renderAdmin();
+  }catch(err){
+    showToast(err.message || 'Could not update stage');
+  }
+}
+
+async function adminMarkPaid(jobId){
+  try{
+    await api(`/jobs/${jobId}/invoice/pay`, {method:'POST'});
+    showToast('Marked as paid');
+    renderAdmin();
+  }catch(err){
+    showToast(err.message || 'Could not mark paid');
+  }
+}
+
+let adminInvoiceJobId = null;
+function openAdminInvoice(jobId){
+  adminInvoiceJobId = jobId;
+  document.getElementById('aiDesc').value = 'Studio editing';
+  document.getElementById('aiQty').value = 1;
+  document.getElementById('aiAmount').value = '';
+  document.getElementById('adminInvoiceOverlay').classList.remove('hidden');
+}
+function closeAdminInvoice(){ document.getElementById('adminInvoiceOverlay').classList.add('hidden'); }
+async function submitAdminInvoice(){
+  const description = document.getElementById('aiDesc').value.trim() || 'Studio editing';
+  const qty = Number(document.getElementById('aiQty').value) || 1;
+  const amount = Number(document.getElementById('aiAmount').value) || 0;
+  try{
+    await api(`/jobs/${adminInvoiceJobId}/invoice`, {method:'POST', body:JSON.stringify({
+      lines:[{description, qty, amount}], total_amount: amount*qty
+    })});
+    closeAdminInvoice();
+    showToast('Invoice sent');
+    renderAdmin();
+  }catch(err){
+    showToast(err.message || 'Could not create invoice');
+  }
+}
 
 /* ================= TOAST ================= */
 let toastTimer;

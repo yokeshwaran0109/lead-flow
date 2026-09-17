@@ -17,8 +17,6 @@ class Settings(BaseSettings):
     resend_api_key: str = ""
     email_from: str = "noreply@leadflow.dev"
 
-    admin_api_key: str = "changeme"
-
     cors_origins: list[str] = ["*"]
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
