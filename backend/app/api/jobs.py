@@ -10,7 +10,7 @@ from app.models.admin import Admin
 from app.models.job import Job
 from app.models.studio import Studio
 from app.schemas.job import JobCreate, JobOut, StageUpdate
-from app.services.email import send_email
+from app.services.email import render_email, send_email
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -37,11 +37,14 @@ async def create_job(
         send_email(
             admin.email,
             f"New job from {studio.name}: {job.ref}",
-            f"<p><b>{studio.name}</b> submitted a new job.</p>"
-            f"<p>Job: {job.name} ({job.ref})<br>"
-            f"Spec: {job.spec}<br>"
-            f"Turnaround: {job.turnaround}</p>"
-            f"<p>Notes: {job.notes or '—'}</p>",
+            render_email(
+                "New job submitted",
+                f"<b>{studio.name}</b> submitted a new job.<br><br>"
+                f"Job: {job.name} ({job.ref})<br>"
+                f"Spec: {job.spec}<br>"
+                f"Turnaround: {job.turnaround}<br><br>"
+                f"Notes: {job.notes or '—'}",
+            ),
         )
     return job
 
@@ -88,6 +91,9 @@ async def update_stage(
         send_email(
             studio.email,
             f"{job.ref} moved to {stage_label}",
-            f"<p>Your job {job.ref} ({job.name}) is now: {stage_label}.</p>",
+            render_email(
+                f"{job.ref} updated",
+                f"Your job <b>{job.name}</b> ({job.ref}) is now: <b>{stage_label}</b>.",
+            ),
         )
     return job

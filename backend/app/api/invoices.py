@@ -13,7 +13,7 @@ from app.models.invoice import Invoice
 from app.models.job import Job, Stage
 from app.models.studio import Studio
 from app.schemas.invoice import InvoiceCreate, InvoiceOut
-from app.services.email import send_email
+from app.services.email import render_email, send_email
 
 router = APIRouter(prefix="/jobs/{job_id}/invoice", tags=["invoices"])
 
@@ -62,7 +62,12 @@ async def create_invoice(
         send_email(
             studio.email,
             f"Invoice {invoice.invoice_number} for {job.ref}",
-            f"<p>Invoice {invoice.invoice_number} for {job.ref} ({job.name}): ${invoice.total_amount}.</p>",
+            render_email(
+                f"Invoice {invoice.invoice_number}",
+                f"An invoice for {job.ref} ({job.name}) is ready.<br><br>"
+                f"Total: <b>£{invoice.total_amount}</b><br>"
+                f"Sign in to Lead Flow to view the full breakdown and payment status.",
+            ),
         )
     return invoice
 
@@ -86,6 +91,9 @@ async def mark_paid(
         send_email(
             studio.email,
             f"Payment received for {job.ref}",
-            f"<p>Thanks — we've received payment for {job.ref} ({job.name}).</p>",
+            render_email(
+                "Payment received",
+                f"Thanks — we've received payment for {job.ref} ({job.name}).",
+            ),
         )
     return job.invoice
